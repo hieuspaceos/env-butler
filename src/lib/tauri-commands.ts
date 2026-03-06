@@ -71,6 +71,15 @@ export const exportVault = (projectPath: string, password: string) =>
 export const importVault = (fileBytes: number[], password: string) =>
   invoke<Record<string, string>>("cmd_import_vault", { fileBytes, password });
 
+export const folderPush = (slug: string, projectPath: string, password: string) =>
+  invoke<string>("cmd_folder_push", { slug, projectPath, password });
+
+export const folderPull = (slug: string, password: string) =>
+  invoke<Record<string, string>>("cmd_folder_pull", { slug, password });
+
+export const saveSyncFolder = (folder: string | null) =>
+  invoke<void>("cmd_save_sync_folder", { folder });
+
 // -- Phase 4: Supabase sync commands --
 
 export interface VaultRecord {
@@ -86,6 +95,7 @@ export type ConflictStatus = "InSync" | "SafePull" | "PushReminder" | "Conflict"
 export interface SupabaseConfig {
   supabase_url: string;
   supabase_service_role_key: string;
+  sync_folder: string | null;
 }
 
 export const pushToSupabase = (

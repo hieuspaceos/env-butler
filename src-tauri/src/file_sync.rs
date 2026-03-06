@@ -71,6 +71,35 @@ pub fn import_vault(
     vault::extract_vault_zip(&zip_bytes)
 }
 
+/// Push encrypted vault to sync folder as {slug}.envbutler
+pub fn push_to_folder(
+    sync_folder: &str,
+    slug: &str,
+    project_path: &str,
+    password: &str,
+) -> Result<String, AppError> {
+    let bytes = export_vault(project_path, password)?;
+    let dest = std::path::Path::new(sync_folder).join(format!("{slug}.envbutler"));
+    std::fs::write(&dest, &bytes)?;
+    Ok(dest.to_string_lossy().to_string())
+}
+
+/// Pull encrypted vault from sync folder and return decrypted files
+pub fn pull_from_folder(
+    sync_folder: &str,
+    slug: &str,
+    password: &str,
+) -> Result<HashMap<String, String>, AppError> {
+    let src = std::path::Path::new(sync_folder).join(format!("{slug}.envbutler"));
+    if !src.exists() {
+        return Err(AppError::NotFound(format!(
+            "No vault file found: {slug}.envbutler in sync folder"
+        )));
+    }
+    let bytes = std::fs::read(&src)?;
+    import_vault(&bytes, password)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

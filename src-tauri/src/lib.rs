@@ -189,6 +189,24 @@ async fn cmd_import_vault(file_bytes: Vec<u8>, password: String) -> Result<HashM
 }
 
 #[tauri::command]
+async fn cmd_folder_push(slug: String, project_path: String, password: String) -> Result<String, AppError> {
+    let config = meta::load_config()?;
+    let folder = config.sync_folder.ok_or_else(|| {
+        AppError::NotFound("Sync folder not configured. Go to Settings.".into())
+    })?;
+    file_sync::push_to_folder(&folder, &slug, &project_path, &password)
+}
+
+#[tauri::command]
+async fn cmd_folder_pull(slug: String, password: String) -> Result<HashMap<String, String>, AppError> {
+    let config = meta::load_config()?;
+    let folder = config.sync_folder.ok_or_else(|| {
+        AppError::NotFound("Sync folder not configured. Go to Settings.".into())
+    })?;
+    file_sync::pull_from_folder(&folder, &slug, &password)
+}
+
+#[tauri::command]
 async fn cmd_save_supabase_config(url: String, service_role_key: String) -> Result<(), AppError> {
     // Validate: service_role key should start with "eyJ" (JWT format)
     if !service_role_key.starts_with("eyJ") {
@@ -196,10 +214,20 @@ async fn cmd_save_supabase_config(url: String, service_role_key: String) -> Resu
             "Invalid key format. Use your Supabase Service Role Key (starts with eyJ...).".into(),
         ));
     }
+    // Preserve existing sync_folder when saving Supabase config
+    let existing = meta::load_config().ok();
     meta::save_config(&SupabaseConfig {
         supabase_url: url,
         supabase_service_role_key: service_role_key,
+        sync_folder: existing.and_then(|c| c.sync_folder),
     })
+}
+
+#[tauri::command]
+async fn cmd_save_sync_folder(folder: Option<String>) -> Result<(), AppError> {
+    let mut config = meta::load_config().unwrap_or_default();
+    config.sync_folder = folder;
+    meta::save_config(&config)
 }
 
 #[tauri::command]
@@ -238,6 +266,9 @@ pub fn run() {
             cmd_decrypt_for_diff,
             cmd_export_vault,
             cmd_import_vault,
+            cmd_folder_push,
+            cmd_folder_pull,
+            cmd_save_sync_folder,
             cmd_save_supabase_config,
             cmd_load_supabase_config,
         ])

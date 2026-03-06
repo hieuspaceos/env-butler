@@ -121,6 +121,10 @@ pub struct SupabaseConfig {
     /// Safe for self-hosted single-user: the key stays local on user's machine.
     #[serde(alias = "supabase_anon_key")]
     pub supabase_service_role_key: String,
+    /// Optional sync folder path (Google Drive, iCloud, Dropbox, etc.)
+    /// When set, Push/Pull can use this folder instead of Supabase.
+    #[serde(default)]
+    pub sync_folder: Option<String>,
 }
 
 /// Get the config.json file path

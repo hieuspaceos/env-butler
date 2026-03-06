@@ -1,11 +1,12 @@
 // Settings: project management + global Supabase config.
 
 import { useRef, useEffect, useState } from "react";
-import { ArrowLeft, Database, CheckCircle2, FolderOpen, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Database, CheckCircle2, FolderOpen, Trash2, Plus, Cloud } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
   saveSupabaseConfig,
   loadSupabaseConfig,
+  saveSyncFolder,
   loadProjects,
   saveProjectSlug,
   removeProject,
@@ -25,6 +26,7 @@ export default function Settings({ onBack }: SettingsProps) {
   const [showAddProject, setShowAddProject] = useState(false);
   const [newPath, setNewPath] = useState("");
   const [newSlug, setNewSlug] = useState("");
+  const [syncFolder, setSyncFolderState] = useState<string | null>(null);
 
   const toErr = (e: unknown) =>
     e instanceof Error ? e.message : typeof e === "string" ? e : JSON.stringify(e);
@@ -35,6 +37,7 @@ export default function Settings({ onBack }: SettingsProps) {
       .then((config) => {
         if (urlRef.current) urlRef.current.value = config.supabase_url;
         if (keyRef.current) keyRef.current.value = config.supabase_service_role_key;
+        setSyncFolderState(config.sync_folder);
       })
       .catch(() => {});
 
@@ -207,6 +210,58 @@ export default function Settings({ onBack }: SettingsProps) {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Sync Folder section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Cloud className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Sync Folder</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Point to a cloud-synced folder (Google Drive, iCloud, Dropbox) for automatic file-based sync — no Supabase needed.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                const selected = await open({ directory: true, multiple: false, title: "Select sync folder" });
+                if (selected) {
+                  const folder = selected as string;
+                  try {
+                    await saveSyncFolder(folder);
+                    setSyncFolderState(folder);
+                    setSaved(true);
+                    setTimeout(() => setSaved(false), 2000);
+                  } catch (err) {
+                    setError(toErr(err));
+                  }
+                }
+              }}
+              className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background text-left hover:bg-muted transition-colors"
+            >
+              <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className={syncFolder ? "text-foreground truncate text-sm" : "text-muted-foreground text-sm"}>
+                {syncFolder || "Click to select folder..."}
+              </span>
+            </button>
+            {syncFolder && (
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await saveSyncFolder(null);
+                    setSyncFolderState(null);
+                  } catch (err) {
+                    setError(toErr(err));
+                  }
+                }}
+                className="px-3 py-2 rounded-md border border-border text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-sm"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Supabase section */}
