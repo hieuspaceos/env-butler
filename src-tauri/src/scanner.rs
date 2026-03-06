@@ -175,12 +175,31 @@ fn fingerprint_file(
 
     let text = String::from_utf8_lossy(&content);
 
-    // Check for blocked content patterns (SSH keys, etc.)
+    // Check for private key content patterns.
+    // If the key appears inside an env var value (KEY=...-----BEGIN...), warn instead of block.
+    // Only block if the file IS a raw key file (pattern appears at start of line, not after '=').
     for pattern in BLOCK_CONTENT_PATTERNS {
         if text.contains(pattern) {
-            scanned.blocked = true;
-            scanned.block_reason = Some(format!("Contains private key: {pattern}"));
-            return Ok(());
+            let is_env_value = text.lines().any(|line| {
+                let trimmed = line.trim();
+                if let Some(eq_pos) = trimmed.find('=') {
+                    let value_part = &trimmed[eq_pos + 1..];
+                    value_part.contains(pattern)
+                } else {
+                    false
+                }
+            });
+
+            if is_env_value {
+                // Key is inside an env var value — warn, don't block
+                scanned.warnings.push(format!("Contains embedded private key (will be encrypted)"));
+                scanned.has_sensitive_keys = true;
+            } else {
+                // Raw key file — block
+                scanned.blocked = true;
+                scanned.block_reason = Some(format!("Raw private key file: {pattern}"));
+                return Ok(());
+            }
         }
     }
 
