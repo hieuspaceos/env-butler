@@ -136,11 +136,25 @@ async fn cmd_decrypt_and_apply(
     let plaintext_hash = vault::compute_plaintext_hash(&zip_bytes);
     let files = vault::extract_vault_zip(&zip_bytes)?;
 
-    // Write files to project directory
+    // Write files to project directory (with path traversal protection)
+    let project_dir = std::path::Path::new(&project_path).canonicalize()?;
     let mut written = Vec::new();
     for (filename, content) in &files {
-        let path = std::path::Path::new(&project_path).join(filename);
-        std::fs::write(&path, content)?;
+        // Block path traversal: reject filenames with ".." or absolute paths
+        if filename.contains("..") || filename.starts_with('/') || filename.starts_with('\\') {
+            return Err(AppError::SecurityBlock(format!(
+                "Blocked unsafe filename in vault: {filename}"
+            )));
+        }
+        let target = project_dir.join(filename);
+        // Double-check resolved path stays inside project directory
+        let resolved = target.parent().map(|p| p.to_path_buf()).unwrap_or(target.clone());
+        if !resolved.starts_with(&project_dir) {
+            return Err(AppError::SecurityBlock(format!(
+                "Path traversal blocked: {filename}"
+            )));
+        }
+        std::fs::write(&target, content)?;
         written.push(filename.clone());
     }
 
