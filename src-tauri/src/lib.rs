@@ -1,5 +1,6 @@
 mod crypto;
 mod error;
+mod file_sync;
 mod meta;
 mod recovery;
 mod scanner;
@@ -175,6 +176,18 @@ async fn cmd_decrypt_for_diff(
     vault::extract_vault_zip(&zip_bytes)
 }
 
+// -- Local file sync commands --
+
+#[tauri::command]
+async fn cmd_export_vault(project_path: String, password: String) -> Result<Vec<u8>, AppError> {
+    file_sync::export_vault(&project_path, &password)
+}
+
+#[tauri::command]
+async fn cmd_import_vault(file_bytes: Vec<u8>, password: String) -> Result<HashMap<String, String>, AppError> {
+    file_sync::import_vault(&file_bytes, &password)
+}
+
 #[tauri::command]
 async fn cmd_save_supabase_config(url: String, service_role_key: String) -> Result<(), AppError> {
     // Validate: service_role key should start with "eyJ" (JWT format)
@@ -223,6 +236,8 @@ pub fn run() {
             cmd_check_conflict,
             cmd_decrypt_and_apply,
             cmd_decrypt_for_diff,
+            cmd_export_vault,
+            cmd_import_vault,
             cmd_save_supabase_config,
             cmd_load_supabase_config,
         ])

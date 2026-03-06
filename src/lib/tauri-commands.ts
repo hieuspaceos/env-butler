@@ -63,6 +63,14 @@ export const saveProjectSlug = (path: string, slug: string) =>
 export const removeProject = (slug: string) =>
   invoke<void>("cmd_remove_project", { slug });
 
+// -- Local file sync commands --
+
+export const exportVault = (projectPath: string, password: string) =>
+  invoke<number[]>("cmd_export_vault", { projectPath, password });
+
+export const importVault = (fileBytes: number[], password: string) =>
+  invoke<Record<string, string>>("cmd_import_vault", { fileBytes, password });
+
 // -- Phase 4: Supabase sync commands --
 
 export interface VaultRecord {

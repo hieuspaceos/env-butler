@@ -6,6 +6,8 @@ import ProjectStatusCard from "@/components/project-status-card";
 import PushPreviewModal from "@/components/push-preview-modal";
 import MasterKeyInput from "@/components/master-key-input";
 import DiffView from "@/components/diff-view";
+import { save, open } from "@tauri-apps/plugin-dialog";
+import { writeFile, readFile } from "@tauri-apps/plugin-fs";
 import {
   encryptAndPrepare,
   pushToSupabase,
@@ -13,6 +15,8 @@ import {
   checkConflict,
   decryptAndApply,
   decryptForDiff,
+  exportVault,
+  importVault,
   type ScannedFile,
   type VaultRecord,
 } from "@/lib/tauri-commands";
@@ -30,7 +34,7 @@ interface DashboardProps {
   onSettings: () => void;
 }
 
-type View = "idle" | "scanning" | "push-key" | "push-preview" | "pushing" | "pull-key" | "pulling" | "diff";
+type View = "idle" | "scanning" | "push-key" | "push-preview" | "pushing" | "pull-key" | "pulling" | "diff" | "export-key" | "exporting" | "import-key" | "importing" | "import-preview";
 
 export default function Dashboard({ onSettings }: DashboardProps) {
   const { config, activeProject, scannedFiles, scan, refresh, setActiveSlug } = useProjectState();
@@ -229,8 +233,102 @@ export default function Dashboard({ onSettings }: DashboardProps) {
     setView("idle");
   }, []);
 
+  // -- Export flow --
+
+  const [importedFiles, setImportedFiles] = useState<Record<string, string>>({});
+
+  const handleExportWithKey = useCallback(
+    async (password: string) => {
+      if (!activeProject) return;
+      try {
+        setView("exporting");
+        setError(null);
+        setInfo(null);
+        const bytes = await exportVault(activeProject.path, password);
+        const filePath = await save({
+          title: "Save Encrypted Vault",
+          defaultPath: `${activeProject.slug}.envbutler`,
+          filters: [{ name: "Env Butler Vault", extensions: ["envbutler"] }],
+        });
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(bytes));
+          setInfo(`Exported to ${filePath}`);
+        }
+        setView("idle");
+      } catch (e) {
+        setError(toErrorMessage(e));
+        setView("idle");
+      }
+    },
+    [activeProject],
+  );
+
+  // -- Import flow --
+
+  const importFileRef = useRef<Uint8Array | null>(null);
+
+  const handleImportSelect = useCallback(async () => {
+    try {
+      setError(null);
+      setInfo(null);
+      const filePath = await open({
+        title: "Select .envbutler File",
+        filters: [{ name: "Env Butler Vault", extensions: ["envbutler"] }],
+        multiple: false,
+      });
+      if (!filePath) return;
+      const bytes = await readFile(filePath as string);
+      importFileRef.current = bytes;
+      setView("import-key");
+    } catch (e) {
+      setError(toErrorMessage(e));
+    }
+  }, []);
+
+  const handleImportWithKey = useCallback(
+    async (password: string) => {
+      if (!activeProject || !importFileRef.current) return;
+      try {
+        setView("importing");
+        setError(null);
+        const files = await importVault(Array.from(importFileRef.current), password);
+        importFileRef.current = null;
+        setImportedFiles(files);
+        setView("import-preview");
+      } catch (e) {
+        setError(toErrorMessage(e));
+        setView("idle");
+      }
+    },
+    [activeProject],
+  );
+
+  const handleImportConfirm = useCallback(async () => {
+    if (!activeProject) return;
+    try {
+      setView("importing");
+      const projectDir = activeProject.path;
+      for (const [filename, content] of Object.entries(importedFiles)) {
+        // Security: only write .env* files, no path traversal
+        if (filename.includes("..") || filename.startsWith("/")) continue;
+        const path = `${projectDir}/${filename}`;
+        const encoder = new TextEncoder();
+        await writeFile(path, encoder.encode(content));
+      }
+      setInfo(`Imported ${Object.keys(importedFiles).length} files`);
+      setImportedFiles({});
+      await refresh();
+      setView("idle");
+    } catch (e) {
+      setError(toErrorMessage(e));
+      setView("idle");
+    }
+  }, [activeProject, importedFiles, refresh]);
+
   const handleCancel = useCallback(() => {
     passwordRef.current = "";
+    importFileRef.current = null;
+    setImportedFiles({});
     setView("idle");
   }, []);
 
@@ -272,6 +370,63 @@ export default function Dashboard({ onSettings }: DashboardProps) {
           onSettings={onSettings}
         />
 
+        {/* Export / Import buttons */}
+        {view === "idle" && activeProject && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => setView("export-key")}
+              className="flex-1 px-4 py-2 rounded-md border border-border text-sm hover:bg-muted"
+            >
+              Export File
+            </button>
+            <button
+              onClick={handleImportSelect}
+              className="flex-1 px-4 py-2 rounded-md border border-border text-sm hover:bg-muted"
+            >
+              Import File
+            </button>
+          </div>
+        )}
+
+        {/* Export: enter key */}
+        {view === "export-key" && (
+          <div className="rounded-lg border border-border p-6">
+            <MasterKeyInput label="Enter Master Key to export" onSubmit={handleExportWithKey} submitText="Export Encrypted File" />
+            <button onClick={handleCancel} className="w-full mt-3 px-4 py-2 rounded-md border border-border text-muted-foreground hover:bg-muted text-sm">Cancel</button>
+          </div>
+        )}
+
+        {/* Import: enter key */}
+        {view === "import-key" && (
+          <div className="rounded-lg border border-border p-6">
+            <MasterKeyInput label="Enter Master Key to decrypt import" onSubmit={handleImportWithKey} submitText="Decrypt & Preview" />
+            <button onClick={handleCancel} className="w-full mt-3 px-4 py-2 rounded-md border border-border text-muted-foreground hover:bg-muted text-sm">Cancel</button>
+          </div>
+        )}
+
+        {/* Import preview */}
+        {view === "import-preview" && (
+          <div className="rounded-lg border border-border p-6 space-y-4">
+            <h3 className="font-semibold">Import Preview</h3>
+            <div className="space-y-2">
+              {Object.entries(importedFiles).map(([name, content]) => (
+                <div key={name} className="p-3 rounded-md bg-muted/30 border border-border">
+                  <p className="font-mono text-sm font-medium">{name}</p>
+                  <p className="text-xs text-muted-foreground">{content.split("\n").filter((l) => l.trim() && !l.startsWith("#")).length} variables</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={handleImportConfirm} className="flex-1 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 text-sm">
+                Write Files
+              </button>
+              <button onClick={handleCancel} className="flex-1 px-4 py-2 rounded-md border border-border text-muted-foreground hover:bg-muted text-sm">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Push: enter key */}
         {view === "push-key" && (
           <div className="rounded-lg border border-border p-6">
@@ -289,11 +444,13 @@ export default function Dashboard({ onSettings }: DashboardProps) {
         )}
 
         {/* Loading */}
-        {(view === "scanning" || view === "pushing" || view === "pulling") && (
+        {(view === "scanning" || view === "pushing" || view === "pulling" || view === "exporting" || view === "importing") && (
           <div className="text-center py-8 text-muted-foreground">
             {view === "scanning" && "Scanning project files..."}
             {view === "pushing" && "Encrypting and pushing..."}
             {view === "pulling" && "Pulling and decrypting..."}
+            {view === "exporting" && "Encrypting and exporting..."}
+            {view === "importing" && "Decrypting imported file..."}
           </div>
         )}
 
