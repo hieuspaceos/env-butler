@@ -1,0 +1,83 @@
+// BIP39 24-word mnemonic recovery kit display.
+// Printable 4-column grid with confirmation checkbox.
+
+import { useState } from "react";
+import { Printer, ShieldCheck } from "lucide-react";
+
+interface RecoveryKitDisplayProps {
+  mnemonic: string;
+  onConfirm: () => void;
+}
+
+export default function RecoveryKitDisplay({
+  mnemonic,
+  onConfirm,
+}: RecoveryKitDisplayProps) {
+  const [saved, setSaved] = useState(false);
+  const words = mnemonic.split(" ");
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <ShieldCheck className="w-12 h-12 mx-auto mb-3 text-primary" />
+        <h2 className="text-xl font-bold">Recovery Kit</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Secured by the same recovery standard as Bitcoin wallets
+        </p>
+      </div>
+
+      {/* 4-column grid of numbered words */}
+      <div className="grid grid-cols-4 gap-2 p-4 rounded-lg border border-border bg-muted/30 print:bg-white print:text-black">
+        {words.map((word, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-2 px-2 py-1.5 rounded bg-background border border-border text-sm"
+          >
+            <span className="text-xs text-muted-foreground w-5 text-right">
+              {i + 1}.
+            </span>
+            <span className="font-mono font-medium">{word}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-center">
+        <button
+          onClick={handlePrint}
+          className="flex items-center gap-2 px-4 py-2 rounded-md border border-border text-sm hover:bg-muted"
+        >
+          <Printer className="w-4 h-4" />
+          Print / Save as PDF
+        </button>
+      </div>
+
+      <div className="border-t border-border pt-4 space-y-3">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={saved}
+            onChange={(e) => setSaved(e.target.checked)}
+            className="mt-0.5 rounded border-input"
+          />
+          <span className="text-sm">
+            I have saved my Recovery Kit in a safe place. I understand that if I
+            lose both my Master Key and this Recovery Kit, my encrypted data
+            cannot be recovered.
+          </span>
+        </label>
+
+        <button
+          onClick={onConfirm}
+          disabled={!saved}
+          className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+}
