@@ -76,12 +76,15 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download release assets
-        uses: robinraju/release-downloader@v1
-        with:
-          tag: ${{ github.ref_name }}
-          fileName: '*'
-          out-file-path: artifacts/
+      - name: Download draft release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p artifacts
+          gh release download "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --dir artifacts/ \
+            --pattern '*'
 
       - name: Generate SHA-256 checksums
         run: |
