@@ -1,6 +1,14 @@
 import { Shield, Download, BookOpen } from "lucide-react";
 
-const trustBadges = ["AES-256-GCM", "Argon2id", "BIP39 Recovery", "Open Source"];
+const trustBadges = [
+  "AES-256-GCM",
+  "Argon2id",
+  "BIP39 Recovery",
+  "Google Drive",
+  "iCloud",
+  "Dropbox",
+  "Open Source",
+];
 
 export default function Hero() {
   return (

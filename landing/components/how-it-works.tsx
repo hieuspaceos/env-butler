@@ -14,7 +14,7 @@ const steps = [
   {
     icon: Cloud,
     title: "Sync",
-    desc: "Encrypted blob goes to YOUR Supabase instance. We're just the tool — you own the data.",
+    desc: "Push to your Supabase, drop into Google Drive / iCloud / Dropbox, or export a portable .envbutler file. Your data, your choice.",
   },
 ];
 
