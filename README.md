@@ -10,6 +10,10 @@ Secure `.env` sync tool for developers. Zero-knowledge encryption, cross-machine
 - **Hash-Based Conflict Detection** — Variable-level masked diff view when local and remote diverge.
 - **Self-Hosted** — Your Supabase instance, your data. No managed service, no vendor lock-in.
 
+## Documentation
+
+Full docs at [env-butler.vercel.app/docs](https://env-butler.vercel.app/docs/) — setup guide, architecture, security model, and FAQ.
+
 ## Quick Start
 
 ### 1. Install
@@ -46,6 +50,7 @@ Run the migration in your Supabase SQL Editor:
 | Recovery | BIP39 (tiny-bip39) |
 | Storage | Self-hosted Supabase |
 | CI/CD | GitHub Actions (public builds) |
+| Landing & Docs | Next.js (static export on Vercel) |
 
 ## Surgical Butler: 3-Layer Safety
 
