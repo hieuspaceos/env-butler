@@ -12,6 +12,12 @@ export default function Footer() {
             <Github className="w-5 h-5" />
             GitHub
           </a>
+          <a
+            href="/docs/"
+            className="text-sm text-zinc-400 hover:text-zinc-100 transition"
+          >
+            Docs
+          </a>
           <span className="text-xs px-2 py-0.5 rounded border border-zinc-700 text-zinc-500">
             MIT License
           </span>

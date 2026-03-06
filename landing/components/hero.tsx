@@ -1,4 +1,4 @@
-import { Shield, Download } from "lucide-react";
+import { Shield, Download, BookOpen } from "lucide-react";
 
 const trustBadges = ["AES-256-GCM", "Argon2id", "BIP39 Recovery", "Open Source"];
 
@@ -32,6 +32,13 @@ export default function Hero() {
           >
             <Download className="w-5 h-5" />
             Download for Windows
+          </a>
+          <a
+            href="/docs/"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-zinc-700 text-zinc-100 font-semibold hover:bg-zinc-800 transition"
+          >
+            <BookOpen className="w-5 h-5" />
+            Read the Docs
           </a>
         </div>
 
