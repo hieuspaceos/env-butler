@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use env_butler_core::{
-    crypto, file_sync, meta, recovery, scanner, supabase, vault, AppError, ScannedFile,
+    ci_token, crypto, file_sync, meta, recovery, scanner, supabase, team, vault, AppError,
+    ScannedFile,
 };
 
 #[derive(Parser)]
@@ -61,6 +62,16 @@ enum Commands {
         #[command(subcommand)]
         action: RecoveryAction,
     },
+    /// Team sharing — invite members via encrypted tokens
+    Team {
+        #[command(subcommand)]
+        action: TeamAction,
+    },
+    /// CI/CD — non-interactive pull using service tokens
+    Ci {
+        #[command(subcommand)]
+        action: CiAction,
+    },
 }
 
 #[derive(Subcommand)]
@@ -69,6 +80,33 @@ enum RecoveryAction {
     Generate,
     /// Restore Master Key from mnemonic phrase
     Restore,
+}
+
+#[derive(Subcommand)]
+enum TeamAction {
+    /// Generate an invite token for a team member
+    Invite {
+        /// Output file path (defaults to {slug}.envbutler-team)
+        #[arg(short, long)]
+        output: Option<String>,
+    },
+    /// Join a team vault using an invite token
+    Join {
+        /// Path to .envbutler-team file
+        file: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum CiAction {
+    /// Generate a service token for CI/CD (store in GitHub Secrets)
+    GenerateToken,
+    /// Pull .env files using ENVBUTLER_TOKEN env var (non-interactive)
+    Pull {
+        /// Skip conflict check
+        #[arg(long)]
+        force: bool,
+    },
 }
 
 /// Prompt for Master Key password (hidden input)
@@ -161,6 +199,14 @@ async fn run(cli: Cli) -> Result<(), AppError> {
         Commands::Recovery { action } => match action {
             RecoveryAction::Generate => cmd_recovery_generate()?,
             RecoveryAction::Restore => cmd_recovery_restore()?,
+        },
+        Commands::Team { action } => match action {
+            TeamAction::Invite { output } => cmd_team_invite(output)?,
+            TeamAction::Join { file } => cmd_team_join(&file)?,
+        },
+        Commands::Ci { action } => match action {
+            CiAction::GenerateToken => cmd_ci_generate_token()?,
+            CiAction::Pull { force } => cmd_ci_pull(force).await?,
         },
     }
     Ok(())
@@ -434,5 +480,119 @@ fn cmd_recovery_restore() -> Result<(), AppError> {
     let _password = recovery::mnemonic_to_password(mnemonic.trim())?;
     println!("Master Key recovered successfully.");
     println!("Use it as your password for push/pull/export/import commands.");
+    Ok(())
+}
+
+// -- Team commands --
+
+fn cmd_team_invite(output: Option<String>) -> Result<(), AppError> {
+    let (slug, _path) = resolve_project(true)?;
+    let master_key = ask_password("Master Key: ")?;
+    let passphrase = ask_password("Invite passphrase (share this separately): ")?;
+
+    print!("Your name (for token metadata): ");
+    std::io::Write::flush(&mut std::io::stdout()).ok();
+    let mut name = String::new();
+    std::io::stdin().read_line(&mut name).map_err(|e| AppError::Io(e.to_string()))?;
+    let name = name.trim();
+
+    let config = meta::load_config()?;
+    let token_bytes = team::generate_invite_token(&slug, &master_key, &config, name, &passphrase)?;
+
+    let out_path = output.unwrap_or_else(|| format!("{}.envbutler-team", slug));
+    std::fs::write(&out_path, &token_bytes)?;
+
+    println!("Invite token saved to: {}", out_path);
+    println!("Share this file + passphrase with your team member.");
+    println!("They can join with: env-butler team join {}", out_path);
+    Ok(())
+}
+
+fn cmd_team_join(file: &str) -> Result<(), AppError> {
+    let passphrase = ask_password("Invite passphrase: ")?;
+    let file_bytes = std::fs::read(file)?;
+
+    let payload = team::parse_invite_token(&file_bytes, &passphrase)?;
+
+    // Save Supabase config from invite
+    meta::save_config(&meta::SupabaseConfig {
+        supabase_url: payload.supabase_url.clone(),
+        supabase_service_role_key: payload.supabase_key.clone(),
+        sync_folder: payload.sync_folder.clone(),
+    })?;
+
+    // Register project with the vault slug
+    let path = current_dir_str()?;
+    meta::upsert_project(&payload.vault_slug, &path)?;
+
+    println!("Joined team vault '{}'", payload.vault_slug);
+    println!("Supabase: {}", payload.supabase_url);
+    if let Some(folder) = &payload.sync_folder {
+        println!("Sync folder: {}", folder);
+    }
+    println!("Created by: {} ({})", payload.created_by, payload.created_at);
+    println!();
+    println!("You can now push/pull with your team's Master Key.");
+    Ok(())
+}
+
+// -- CI commands --
+
+fn cmd_ci_generate_token() -> Result<(), AppError> {
+    let (slug, _path) = resolve_project(true)?;
+    let master_key = ask_password("Master Key: ")?;
+    let passphrase = ask_password("Token passphrase (internal, not shared): ")?;
+
+    let config = meta::load_config()?;
+    let token_str = ci_token::generate_service_token(&slug, &master_key, &config, "ci-service", &passphrase)?;
+
+    println!();
+    println!("Service token (add to GitHub Secrets as ENVBUTLER_TOKEN):");
+    println!();
+    println!("{}", token_str);
+    println!();
+    println!("Usage in GitHub Actions:");
+    println!("  env:");
+    println!("    ENVBUTLER_TOKEN: ${{{{ secrets.ENVBUTLER_TOKEN }}}}");
+    println!("  run: env-butler ci pull");
+    Ok(())
+}
+
+async fn cmd_ci_pull(force: bool) -> Result<(), AppError> {
+    // Read token from environment (non-interactive)
+    let payload = ci_token::read_token_from_env()?;
+
+    // Set up config from token
+    let config = meta::SupabaseConfig {
+        supabase_url: payload.supabase_url.clone(),
+        supabase_service_role_key: payload.supabase_key.clone(),
+        sync_folder: payload.sync_folder.clone(),
+    };
+
+    let path = current_dir_str()?;
+
+    // Pull from Supabase
+    let record = supabase::pull_vault(&config, &payload.vault_slug).await?;
+    let blob = hex::decode(&record.encrypted_blob)
+        .map_err(|e| AppError::Crypto(format!("Invalid hex: {e}")))?;
+    let zip_bytes = crypto::decrypt(&blob, &payload.master_key)?;
+    let files = vault::extract_vault_zip(&zip_bytes)?;
+
+    // Write files
+    let project_dir = std::path::Path::new(&path);
+    if !force {
+        // In CI, warn if .env files already exist
+        for filename in files.keys() {
+            let target = project_dir.join(filename);
+            if target.exists() {
+                return Err(AppError::Validation(format!(
+                    "File already exists: {}. Use --force to overwrite.", filename
+                )));
+            }
+        }
+    }
+
+    write_files_to_dir(&files, project_dir)?;
+    println!("CI pull: wrote {} file(s) for '{}'", files.len(), payload.vault_slug);
     Ok(())
 }

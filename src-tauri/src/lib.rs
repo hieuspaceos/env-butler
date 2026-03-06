@@ -1,5 +1,5 @@
 use env_butler_core::{
-    crypto, file_sync, meta, recovery, scanner, supabase, vault, AppError, ScannedFile,
+    crypto, file_sync, meta, recovery, scanner, supabase, team, vault, AppError, ScannedFile,
     SupabaseConfig,
 };
 use serde::Serialize;
@@ -221,6 +221,40 @@ async fn cmd_load_supabase_config() -> Result<SupabaseConfig, AppError> {
     meta::load_config()
 }
 
+// -- Team sharing commands --
+
+#[tauri::command]
+async fn cmd_team_generate_invite(
+    slug: String,
+    master_key: String,
+    passphrase: String,
+    created_by: String,
+) -> Result<Vec<u8>, AppError> {
+    let config = meta::load_config()?;
+    team::generate_invite_token(&slug, &master_key, &config, &created_by, &passphrase)
+}
+
+#[tauri::command]
+async fn cmd_team_join(
+    file_bytes: Vec<u8>,
+    passphrase: String,
+    project_path: String,
+) -> Result<team::InvitePayload, AppError> {
+    let payload = team::parse_invite_token(&file_bytes, &passphrase)?;
+
+    // Save config from invite token
+    meta::save_config(&SupabaseConfig {
+        supabase_url: payload.supabase_url.clone(),
+        supabase_service_role_key: payload.supabase_key.clone(),
+        sync_folder: payload.sync_folder.clone(),
+    })?;
+
+    // Register project
+    meta::upsert_project(&payload.vault_slug, &project_path)?;
+
+    Ok(payload)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -257,6 +291,8 @@ pub fn run() {
             cmd_save_sync_folder,
             cmd_save_supabase_config,
             cmd_load_supabase_config,
+            cmd_team_generate_invite,
+            cmd_team_join,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

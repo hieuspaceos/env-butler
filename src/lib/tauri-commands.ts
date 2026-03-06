@@ -126,3 +126,29 @@ export const saveSupabaseConfig = (url: string, serviceRoleKey: string) =>
 
 export const loadSupabaseConfig = () =>
   invoke<SupabaseConfig>("cmd_load_supabase_config");
+
+// -- Team sharing commands --
+
+export interface InvitePayload {
+  vault_slug: string;
+  master_key: string;
+  supabase_url: string;
+  supabase_key: string;
+  sync_folder: string | null;
+  created_by: string;
+  created_at: string;
+  permissions: string;
+}
+
+export const teamGenerateInvite = (
+  slug: string,
+  masterKey: string,
+  passphrase: string,
+  createdBy: string,
+) => invoke<number[]>("cmd_team_generate_invite", { slug, masterKey, passphrase, createdBy });
+
+export const teamJoin = (
+  fileBytes: number[],
+  passphrase: string,
+  projectPath: string,
+) => invoke<InvitePayload>("cmd_team_join", { fileBytes, passphrase, projectPath });
