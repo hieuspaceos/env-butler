@@ -12,6 +12,32 @@ use crate::meta::SupabaseConfig;
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
+/// Convert raw Supabase error response into a user-friendly message
+fn friendly_error(status: reqwest::StatusCode, body: &str) -> String {
+    // Try to parse Supabase PostgREST error JSON
+    if let Ok(json) = serde_json::from_str::<serde_json::Value>(body) {
+        if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
+            // Table not found
+            if msg.contains("Could not find the table") {
+                return "Vault table not found. Run the migration SQL in your Supabase SQL Editor first.".into();
+            }
+            // Permission denied
+            if msg.contains("permission denied") || msg.contains("row-level security") {
+                return "Permission denied. Check your Supabase RLS policies.".into();
+            }
+            return msg.to_string();
+        }
+    }
+
+    match status.as_u16() {
+        401 => "Invalid Supabase credentials. Check your URL and Anon Key in Settings.".into(),
+        403 => "Access forbidden. Check your Supabase RLS policies.".into(),
+        404 => "Vault table not found. Run the migration SQL in your Supabase SQL Editor.".into(),
+        500..=599 => "Supabase server error. Try again later.".into(),
+        _ => format!("Supabase error ({status}): {body}"),
+    }
+}
+
 /// Record stored in Supabase vault table
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VaultRecord {
@@ -66,9 +92,7 @@ pub async fn push_vault(
     if !response.status().is_success() {
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
-        return Err(AppError::Supabase(format!(
-            "Push failed ({status}): {body}"
-        )));
+        return Err(AppError::Supabase(friendly_error(status, &body)));
     }
 
     Ok(())
@@ -95,9 +119,7 @@ pub async fn pull_vault(
     if !response.status().is_success() {
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
-        return Err(AppError::Supabase(format!(
-            "Pull failed ({status}): {body}"
-        )));
+        return Err(AppError::Supabase(friendly_error(status, &body)));
     }
 
     let records: Vec<VaultRecord> = response

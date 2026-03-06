@@ -53,8 +53,15 @@ export default function Dashboard({ onSettings }: DashboardProps) {
       setInfo(null);
       setView("scanning");
       const files = await scan(activeProject.path);
-      if (files.filter((f) => !f.blocked).length === 0) {
-        setError("No .env files found in project directory");
+      const allowed = files.filter((f) => !f.blocked);
+      if (allowed.length === 0) {
+        const blocked = files.filter((f) => f.blocked);
+        if (blocked.length > 0) {
+          const reasons = blocked.map((f) => `${f.filename}: ${f.block_reason}`).join("; ");
+          setError(`All .env files were blocked by safety checks — ${reasons}`);
+        } else {
+          setError("No .env files found in project directory");
+        }
         setView("idle");
         return;
       }
