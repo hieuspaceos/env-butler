@@ -9,6 +9,8 @@ Secure `.env` sync tool for developers. Zero-knowledge encryption, cross-machine
 - **BIP39 Recovery Kit** — 12-word mnemonic (same standard as Bitcoin wallets) for Master Key recovery.
 - **Hash-Based Conflict Detection** — Variable-level masked diff view when local and remote diverge.
 - **3 Sync Methods** — Supabase cloud, folder-based (Google Drive/iCloud/Dropbox), or portable `.envbutler` files.
+- **Team Sharing** — Invite tokens let team members access shared vaults. No auth server needed.
+- **CI/CD Ready** — Service tokens for non-interactive pulls in GitHub Actions, GitLab CI, etc.
 - **CLI + GUI** — Desktop app (Tauri) and terminal CLI share the same Rust core.
 - **Self-Hosted** — Your Supabase instance, your data. No managed service, no vendor lock-in.
 
@@ -53,12 +55,31 @@ env-butler folder-pull
 env-butler export
 env-butler import project.envbutler
 
+# Team sharing
+env-butler team invite            # Generate .envbutler-team token
+env-butler team join token.envbutler-team  # Join with invite token
+
+# CI/CD
+env-butler ci generate-token      # Base64 token for GitHub Secrets
+ENVBUTLER_TOKEN=... env-butler ci pull  # Non-interactive pull
+
 # Recovery
 env-butler recovery generate
 env-butler recovery restore
 
 # Status
 env-butler status
+```
+
+### CI/CD (GitHub Actions)
+
+```yaml
+- name: Pull env files
+  run: |
+    cargo install --path crates/cli
+    env-butler ci pull --force
+  env:
+    ENVBUTLER_TOKEN: ${{ secrets.ENVBUTLER_TOKEN }}
 ```
 
 ## Tech Stack

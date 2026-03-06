@@ -7,6 +7,8 @@ const trustBadges = [
   "Google Drive",
   "iCloud",
   "Dropbox",
+  "Team Sharing",
+  "CI/CD",
   "Open Source",
 ];
 
