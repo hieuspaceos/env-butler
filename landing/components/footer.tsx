@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <a
-            href="https://github.com/hieuphan94/env-butler"
+            href="https://github.com/hieuspaceos/env-butler"
             className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-100 transition"
           >
             <Github className="w-5 h-5" />

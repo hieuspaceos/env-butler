@@ -152,7 +152,7 @@ Cipher  → AES-256-GCM encrypted zip archive`}
           <li>
             Go to{" "}
             <a
-              href="https://github.com/hieuphan94/env-butler/actions"
+              href="https://github.com/hieuspaceos/env-butler/actions"
               className="text-emerald-400 hover:underline"
             >
               Actions
@@ -163,7 +163,7 @@ Cipher  → AES-256-GCM encrypted zip archive`}
           <li>
             Compare with <code>checksums.txt</code> on the{" "}
             <a
-              href="https://github.com/hieuphan94/env-butler/releases"
+              href="https://github.com/hieuspaceos/env-butler/releases"
               className="text-emerald-400 hover:underline"
             >
               Release page

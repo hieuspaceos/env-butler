@@ -20,14 +20,14 @@ export default function Hero() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
-            href="https://github.com/hieuphan94/env-butler/releases/latest"
+            href="https://github.com/hieuspaceos/env-butler/releases/latest"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-emerald-500 text-zinc-950 font-semibold hover:bg-emerald-400 transition"
           >
             <Download className="w-5 h-5" />
             Download for macOS
           </a>
           <a
-            href="https://github.com/hieuphan94/env-butler/releases/latest"
+            href="https://github.com/hieuspaceos/env-butler/releases/latest"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-zinc-700 text-zinc-100 font-semibold hover:bg-zinc-800 transition"
           >
             <Download className="w-5 h-5" />

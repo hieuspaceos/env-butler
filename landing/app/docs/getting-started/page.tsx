@@ -27,7 +27,7 @@ export default function GettingStarted() {
         <p className="text-zinc-400">
           Grab the latest release from{" "}
           <a
-            href="https://github.com/hieuphan94/env-butler/releases/latest"
+            href="https://github.com/hieuspaceos/env-butler/releases/latest"
             className="text-emerald-400 hover:underline"
           >
             GitHub Releases

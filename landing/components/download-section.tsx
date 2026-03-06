@@ -11,14 +11,14 @@ export default function DownloadSection() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
-            href="https://github.com/hieuphan94/env-butler/releases/latest"
+            href="https://github.com/hieuspaceos/env-butler/releases/latest"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-emerald-500 text-zinc-950 font-semibold hover:bg-emerald-400 transition"
           >
             <Download className="w-5 h-5" />
             macOS (Universal)
           </a>
           <a
-            href="https://github.com/hieuphan94/env-butler/releases/latest"
+            href="https://github.com/hieuspaceos/env-butler/releases/latest"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-zinc-700 font-semibold hover:bg-zinc-800 transition"
           >
             <Download className="w-5 h-5" />
@@ -40,7 +40,7 @@ export default function DownloadSection() {
           <p className="text-xs text-zinc-500">
             Compare with checksums.txt on the{" "}
             <a
-              href="https://github.com/hieuphan94/env-butler/releases"
+              href="https://github.com/hieuspaceos/env-butler/releases"
               className="text-emerald-400 hover:underline"
             >
               release page

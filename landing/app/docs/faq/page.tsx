@@ -137,7 +137,7 @@ Get-FileHash Env-Butler_*.exe -Algorithm SHA256`}
             Yes — MIT licensed. Source code, build pipeline, and release
             artifacts are all on{" "}
             <a
-              href="https://github.com/hieuphan94/env-butler"
+              href="https://github.com/hieuspaceos/env-butler"
               className="text-emerald-400 hover:underline"
             >
               GitHub
