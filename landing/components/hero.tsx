@@ -21,9 +21,9 @@ export default function Hero() {
           <span className="text-emerald-400">Synced. Encrypted. Yours.</span>
         </h1>
         <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
-          Zero-knowledge encryption powered by Rust. Recovery backed by the
-          Bitcoin wallet standard. Built for developers managing dozens of API
-          keys.
+          Zero-knowledge encryption powered by Rust. GUI and CLI.
+          Recovery backed by the Bitcoin wallet standard. Built for developers
+          managing dozens of API keys.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

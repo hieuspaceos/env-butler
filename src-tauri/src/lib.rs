@@ -1,15 +1,7 @@
-mod crypto;
-mod error;
-mod file_sync;
-mod meta;
-mod recovery;
-mod scanner;
-mod supabase;
-mod vault;
-
-use error::AppError;
-use meta::{ProjectsConfig, SupabaseConfig};
-use scanner::ScannedFile;
+use env_butler_core::{
+    crypto, file_sync, meta, recovery, scanner, supabase, vault, AppError, ScannedFile,
+    SupabaseConfig,
+};
 use serde::Serialize;
 use std::collections::HashMap;
 
@@ -74,7 +66,7 @@ async fn cmd_validate_mnemonic(mnemonic: String) -> Result<String, AppError> {
 }
 
 #[tauri::command]
-async fn cmd_load_projects() -> Result<ProjectsConfig, AppError> {
+async fn cmd_load_projects() -> Result<meta::ProjectsConfig, AppError> {
     meta::load_projects()
 }
 
@@ -88,7 +80,7 @@ async fn cmd_remove_project(slug: String) -> Result<(), AppError> {
     meta::remove_project(&slug)
 }
 
-// -- Phase 4: Supabase sync commands --
+// -- Supabase sync commands --
 
 #[tauri::command]
 async fn cmd_push_to_supabase(
@@ -141,14 +133,12 @@ async fn cmd_decrypt_and_apply(
     let project_dir = std::path::Path::new(&project_path).canonicalize()?;
     let mut written = Vec::new();
     for (filename, content) in &files {
-        // Block path traversal: reject filenames with ".." or absolute paths
         if filename.contains("..") || filename.starts_with('/') || filename.starts_with('\\') {
             return Err(AppError::SecurityBlock(format!(
                 "Blocked unsafe filename in vault: {filename}"
             )));
         }
         let target = project_dir.join(filename);
-        // Double-check resolved path stays inside project directory
         let resolved = target.parent().map(|p| p.to_path_buf()).unwrap_or(target.clone());
         if !resolved.starts_with(&project_dir) {
             return Err(AppError::SecurityBlock(format!(
@@ -159,9 +149,7 @@ async fn cmd_decrypt_and_apply(
         written.push(filename.clone());
     }
 
-    // Update sync state
     meta::update_sync_state(&slug, &plaintext_hash)?;
-
     Ok(written)
 }
 
@@ -208,13 +196,11 @@ async fn cmd_folder_pull(slug: String, password: String) -> Result<HashMap<Strin
 
 #[tauri::command]
 async fn cmd_save_supabase_config(url: String, service_role_key: String) -> Result<(), AppError> {
-    // Validate: service_role key should start with "eyJ" (JWT format)
     if !service_role_key.starts_with("eyJ") {
         return Err(AppError::Validation(
             "Invalid key format. Use your Supabase Service Role Key (starts with eyJ...).".into(),
         ));
     }
-    // Preserve existing sync_folder when saving Supabase config
     let existing = meta::load_config().ok();
     meta::save_config(&SupabaseConfig {
         supabase_url: url,

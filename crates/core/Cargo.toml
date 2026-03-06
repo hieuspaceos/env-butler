@@ -1,0 +1,37 @@
+[package]
+name = "env-butler-core"
+version = "0.1.0"
+edition = "2021"
+description = "Core library for Env Butler — crypto, vault, scanner, sync"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+anyhow = "1.0"
+log = "0.4"
+
+# Crypto
+aes-gcm = "0.10"
+argon2 = "0.5"
+rand = "0.8"
+sha2 = "0.10"
+hex = "0.4"
+zeroize = { version = "1", features = ["derive"] }
+
+# Recovery
+tiny-bip39 = "1.0"
+
+# File handling
+zip = "0.6"
+
+# HTTP (Supabase)
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+
+# Utilities
+dirs = "5.0"
+chrono = { version = "0.4", features = ["serde"] }
+urlencoding = "2"
+
+[dev-dependencies]
+tempfile = "3"
