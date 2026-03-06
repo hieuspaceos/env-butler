@@ -68,7 +68,7 @@ pub async fn push_vault(
     metadata: Option<serde_json::Value>,
 ) -> Result<(), AppError> {
     let (client, base_url) = build_client(config)?;
-    let url = format!("{base_url}/rest/v1/vault");
+    let url = format!("{base_url}/rest/v1/vault?on_conflict=project_slug");
 
     let body = serde_json::json!({
         "project_slug": slug,
