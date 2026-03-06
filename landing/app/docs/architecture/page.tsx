@@ -21,31 +21,35 @@ export default function Architecture() {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">System Overview</h2>
         <pre className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 overflow-x-auto">
-{`┌──────────────────────────────────────────────┐
-│                 React Frontend               │
-│  ┌──────────┐ ┌──────────┐ ┌──────────────┐ │
-│  │Dashboard │ │Onboarding│ │   Settings   │ │
-│  └────┬─────┘ └────┬─────┘ └──────┬───────┘ │
-│       └─────────────┼──────────────┘         │
-│              invoke() IPC                    │
-├──────────────────────────────────────────────┤
-│                 Rust Backend                 │
-│  ┌────────┐ ┌────────┐ ┌─────────────────┐  │
-│  │ crypto │ │scanner │ │    recovery     │  │
-│  │AES-256 │ │Surgical│ │   BIP39 24w     │  │
-│  │Argon2id│ │Butler  │ │   mnemonic      │  │
-│  └────────┘ └────────┘ └─────────────────┘  │
-│  ┌────────┐ ┌────────┐ ┌─────────────────┐  │
-│  │ vault  │ │  meta  │ │    supabase     │  │
-│  │zip+hash│ │projects│ │   HTTP sync     │  │
-│  └────────┘ └────────┘ └─────────────────┘  │
-└──────────────────────────┬───────────────────┘
-                           │ HTTPS
-                  ┌────────▼────────┐
-                  │    Supabase     │
-                  │  (self-hosted)  │
-                  │   vault table   │
-                  └─────────────────┘`}
+{`Cargo.toml (workspace)
+├── crates/core/     ← shared Rust library
+│   ├── crypto       AES-256-GCM + Argon2id
+│   ├── scanner      3-layer Surgical Butler
+│   ├── vault        zip + SHA-256 hashing
+│   ├── recovery     BIP39 mnemonic
+│   ├── meta         project + config management
+│   ├── supabase     HTTP push/pull
+│   ├── file_sync    .envbutler file export/import + folder sync
+│   ├── team         invite token generation/parsing
+│   └── ci_token     CI/CD service tokens
+├── crates/cli/      ← terminal binary (clap)
+└── src-tauri/       ← desktop app (Tauri → core)
+
+┌─────────────────┐  ┌──────────────┐
+│   Desktop GUI   │  │  CLI Binary  │
+│  React + Tauri  │  │    clap      │
+└────────┬────────┘  └──────┬───────┘
+         │ invoke()         │ direct call
+         └────────┬─────────┘
+          ┌───────▼───────┐
+          │  env-butler   │
+          │    -core      │
+          └───┬───┬───┬───┘
+              │   │   │
+     ┌────────┘   │   └────────┐
+     ▼            ▼            ▼
+ Supabase    Cloud Folder   .envbutler
+ (HTTPS)   (Drive/iCloud)    (file)`}
         </pre>
       </section>
 
@@ -77,6 +81,18 @@ export default function Architecture() {
             {
               name: "supabase",
               desc: "HTTP client (reqwest + TLS) for uploading/downloading encrypted blobs.",
+            },
+            {
+              name: "file_sync",
+              desc: "Export/import .envbutler files + folder-based sync (Google Drive, iCloud, Dropbox).",
+            },
+            {
+              name: "team",
+              desc: "Invite token generation and parsing for team vault sharing.",
+            },
+            {
+              name: "ci_token",
+              desc: "Service tokens for non-interactive CI/CD pulls via ENVBUTLER_TOKEN env var.",
             },
           ].map((m) => (
             <div
@@ -163,11 +179,12 @@ export default function Architecture() {
             <tbody className="text-zinc-400">
               {[
                 ["Desktop app", "Tauri v2 + Rust"],
+                ["CLI", "Rust + Clap"],
                 ["Frontend", "React + TypeScript + Tailwind CSS"],
                 ["Encryption", "AES-256-GCM + Argon2id"],
                 ["Recovery", "BIP39 (tiny-bip39)"],
-                ["Storage", "Self-hosted Supabase (PostgreSQL)"],
-                ["CI/CD", "GitHub Actions (public builds)"],
+                ["Storage", "Supabase / Google Drive / iCloud / Dropbox"],
+                ["CI/CD", "GitHub Actions + service tokens"],
               ].map(([layer, tech]) => (
                 <tr key={layer} className="border-b border-zinc-800/50">
                   <td className="py-2 pr-4 font-medium text-zinc-200">

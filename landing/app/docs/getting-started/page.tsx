@@ -178,13 +178,90 @@ CREATE TRIGGER vault_updated_at
         </div>
       </section>
 
+      {/* CLI */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold flex items-center gap-3">
+          <span className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-mono flex items-center justify-center">
+            5
+          </span>
+          CLI (Alternative)
+        </h2>
+        <p className="text-zinc-400">
+          Prefer the terminal? Install the CLI and use the same features:
+        </p>
+        <pre className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 overflow-x-auto">
+{`cargo install --path crates/cli
+
+env-butler init
+env-butler config --url https://xxx.supabase.co --key eyJ...
+env-butler push
+env-butler pull`}
+        </pre>
+      </section>
+
+      {/* Team Sharing */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold flex items-center gap-3">
+          <span className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-mono flex items-center justify-center">
+            6
+          </span>
+          Team Sharing
+        </h2>
+        <p className="text-zinc-400">
+          Share vault access with team members using encrypted invite tokens.
+          No auth server needed.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/50 space-y-2">
+            <h3 className="font-semibold text-zinc-200">Owner</h3>
+            <pre className="text-xs font-mono text-zinc-400">
+{`env-butler team invite
+# Share the .envbutler-team file
+# + passphrase via Slack/AirDrop`}
+            </pre>
+          </div>
+          <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/50 space-y-2">
+            <h3 className="font-semibold text-zinc-200">Team Member</h3>
+            <pre className="text-xs font-mono text-zinc-400">
+{`env-butler team join token.envbutler-team
+# Enter passphrase → done
+# Can now push/pull`}
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* CI/CD */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold flex items-center gap-3">
+          <span className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-mono flex items-center justify-center">
+            7
+          </span>
+          CI/CD Integration
+        </h2>
+        <p className="text-zinc-400">
+          Pull .env files in GitHub Actions with a service token:
+        </p>
+        <pre className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 overflow-x-auto">
+{`# Generate token (one-time, interactive)
+env-butler ci generate-token
+# → Copy output to GitHub Secrets as ENVBUTLER_TOKEN
+
+# In your workflow:
+- name: Pull env files
+  run: env-butler ci pull --force
+  env:
+    ENVBUTLER_TOKEN: \${{ secrets.ENVBUTLER_TOKEN }}`}
+        </pre>
+      </section>
+
       {/* Config files */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Where config lives</h2>
         <pre className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300">
 {`~/.env-butler/
   projects.json    # Your projects (slugs, paths, sync hashes)
-  config.json      # Supabase URL + service role key`}
+  config.json      # Supabase URL + service role key + sync folder`}
         </pre>
       </section>
     </div>
