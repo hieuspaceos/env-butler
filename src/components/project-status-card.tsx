@@ -27,7 +27,11 @@ export default function ProjectStatusCard({
   onPull,
   onSettings,
 }: ProjectStatusCardProps) {
-  const status: SyncStatus = project ? "out-of-sync" : "not-configured";
+  const status: SyncStatus = !project
+    ? "not-configured"
+    : project.last_sync_hash
+      ? "synced"
+      : "out-of-sync";
   const config = statusConfig[status];
 
   return (
