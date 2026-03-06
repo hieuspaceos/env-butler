@@ -34,7 +34,7 @@ export default function Settings({ onBack }: SettingsProps) {
     loadSupabaseConfig()
       .then((config) => {
         if (urlRef.current) urlRef.current.value = config.supabase_url;
-        if (keyRef.current) keyRef.current.value = config.supabase_anon_key;
+        if (keyRef.current) keyRef.current.value = config.supabase_service_role_key;
       })
       .catch(() => {});
 
@@ -56,7 +56,7 @@ export default function Settings({ onBack }: SettingsProps) {
     const key = keyRef.current?.value?.trim();
 
     if (!url || !key) {
-      setError("Both URL and Anon Key are required");
+      setError("Both URL and Service Role Key are required");
       return;
     }
 
@@ -230,7 +230,7 @@ export default function Settings({ onBack }: SettingsProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium">Anon Key</label>
+            <label className="block text-sm font-medium">Service Role Key</label>
             <input
               ref={keyRef}
               type="password"

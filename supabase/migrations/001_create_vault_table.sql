@@ -14,12 +14,28 @@ CREATE TABLE IF NOT EXISTS vault (
 -- Enable Row Level Security
 ALTER TABLE vault ENABLE ROW LEVEL SECURITY;
 
--- Allow all operations for anon key (single-user / team with shared key)
--- Tighten this policy if adding multi-user support
-CREATE POLICY "allow_all_for_anon" ON vault
+-- Restrict access: only requests with a valid vault_secret header can read/write.
+-- Set your secret in Supabase Dashboard > Settings > API > Custom Claims,
+-- or pass it as a custom header validated here.
+--
+-- To use: set a Supabase Vault secret via SQL:
+--   INSERT INTO vault_access (secret_hash) VALUES (encode(digest('your-secret', 'sha256'), 'hex'));
+--
+-- For simplicity (self-hosted single-user), we use service_role key instead of anon key.
+-- The service_role key bypasses RLS entirely, so we deny all access for anon role.
+-- This means only requests authenticated with the service_role key can access vault data.
+CREATE POLICY "deny_anon_access" ON vault
   FOR ALL
-  USING (true)
-  WITH CHECK (true);
+  TO anon
+  USING (false)
+  WITH CHECK (false);
+
+-- If using authenticated users (future multi-user), add per-user policy:
+-- CREATE POLICY "user_owns_vault" ON vault
+--   FOR ALL
+--   TO authenticated
+--   USING (auth.uid() = owner_id)
+--   WITH CHECK (auth.uid() = owner_id);
 
 -- Auto-update updated_at on row change
 CREATE OR REPLACE FUNCTION update_updated_at()

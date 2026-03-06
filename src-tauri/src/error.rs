@@ -18,6 +18,9 @@ pub enum AppError {
 
     #[error("{0}")]
     Supabase(String),
+
+    #[error("{0}")]
+    Validation(String),
 }
 
 impl serde::Serialize for AppError {

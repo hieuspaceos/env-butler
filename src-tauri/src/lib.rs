@@ -162,10 +162,16 @@ async fn cmd_decrypt_for_diff(
 }
 
 #[tauri::command]
-async fn cmd_save_supabase_config(url: String, anon_key: String) -> Result<(), AppError> {
+async fn cmd_save_supabase_config(url: String, service_role_key: String) -> Result<(), AppError> {
+    // Validate: service_role key should start with "eyJ" (JWT format)
+    if !service_role_key.starts_with("eyJ") {
+        return Err(AppError::Validation(
+            "Invalid key format. Use your Supabase Service Role Key (starts with eyJ...).".into(),
+        ));
+    }
     meta::save_config(&SupabaseConfig {
         supabase_url: url,
-        supabase_anon_key: anon_key,
+        supabase_service_role_key: service_role_key,
     })
 }
 

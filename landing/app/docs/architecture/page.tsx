@@ -196,9 +196,9 @@ export default function Architecture() {
 )`}
         </pre>
         <p className="text-sm text-zinc-400">
-          Row Level Security is enabled. The default policy allows all
-          operations for the anon key — suitable for single-user or team with a
-          shared key.
+          Row Level Security is enabled. The anon role is denied all access —
+          only requests authenticated with the Service Role Key can read/write
+          vault data. Safe for self-hosted single-user deployments.
         </p>
       </section>
     </div>

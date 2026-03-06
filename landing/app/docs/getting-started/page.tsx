@@ -116,7 +116,7 @@ CREATE TRIGGER vault_updated_at
         <ol start={4} className="list-decimal pl-6 text-zinc-400 space-y-2">
           <li>
             Copy your <strong className="text-zinc-200">Project URL</strong> and{" "}
-            <strong className="text-zinc-200">anon key</strong> from Settings
+            <strong className="text-zinc-200">Service Role Key</strong> from Settings
             &rarr; API
           </li>
         </ol>
@@ -132,7 +132,7 @@ CREATE TRIGGER vault_updated_at
         </h2>
         <ol className="list-decimal pl-6 text-zinc-400 space-y-2">
           <li>Open Env Butler and go to Settings</li>
-          <li>Paste your Supabase URL and anon key</li>
+          <li>Paste your Supabase URL and Service Role Key</li>
           <li>
             Add a project — pick a folder and give it a slug (e.g.,{" "}
             <code>my-api</code>)
@@ -184,7 +184,7 @@ CREATE TRIGGER vault_updated_at
         <pre className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300">
 {`~/.env-butler/
   projects.json    # Your projects (slugs, paths, sync hashes)
-  config.json      # Supabase URL + anon key`}
+  config.json      # Supabase URL + service role key`}
         </pre>
       </section>
     </div>

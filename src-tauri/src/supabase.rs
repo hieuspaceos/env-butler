@@ -30,7 +30,7 @@ fn friendly_error(status: reqwest::StatusCode, body: &str) -> String {
     }
 
     match status.as_u16() {
-        401 => "Invalid Supabase credentials. Check your URL and Anon Key in Settings.".into(),
+        401 => "Invalid Supabase credentials. Check your URL and Service Role Key in Settings.".into(),
         403 => "Access forbidden. Check your Supabase RLS policies.".into(),
         404 => "Vault table not found. Run the migration SQL in your Supabase SQL Editor.".into(),
         500..=599 => "Supabase server error. Try again later.".into(),
@@ -79,8 +79,8 @@ pub async fn push_vault(
 
     let response = client
         .post(&url)
-        .header("apikey", &config.supabase_anon_key)
-        .header("Authorization", format!("Bearer {}", config.supabase_anon_key))
+        .header("apikey", &config.supabase_service_role_key)
+        .header("Authorization", format!("Bearer {}", config.supabase_service_role_key))
         .header("Content-Type", "application/json")
         // Upsert: merge on conflict (project_slug is UNIQUE)
         .header("Prefer", "resolution=merge-duplicates")
@@ -104,14 +104,15 @@ pub async fn pull_vault(
     slug: &str,
 ) -> Result<VaultRecord, AppError> {
     let (client, base_url) = build_client(config)?;
+    let encoded_slug = urlencoding::encode(slug);
     let url = format!(
-        "{base_url}/rest/v1/vault?project_slug=eq.{slug}&select=*",
+        "{base_url}/rest/v1/vault?project_slug=eq.{encoded_slug}&select=*",
     );
 
     let response = client
         .get(&url)
-        .header("apikey", &config.supabase_anon_key)
-        .header("Authorization", format!("Bearer {}", config.supabase_anon_key))
+        .header("apikey", &config.supabase_service_role_key)
+        .header("Authorization", format!("Bearer {}", config.supabase_service_role_key))
         .send()
         .await
         .map_err(|e| AppError::Supabase(format!("Pull request failed: {e}")))?;

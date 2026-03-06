@@ -113,10 +113,14 @@ pub fn get_project(slug: &str) -> Result<Option<ProjectEntry>, AppError> {
 // -- Supabase config management --
 
 /// Supabase connection config stored in ~/.env-butler/config.json
+/// Uses service_role key (not anon key) to bypass RLS — safe because self-hosted.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SupabaseConfig {
     pub supabase_url: String,
-    pub supabase_anon_key: String,
+    /// Service role key — has full DB access, bypasses RLS.
+    /// Safe for self-hosted single-user: the key stays local on user's machine.
+    #[serde(alias = "supabase_anon_key")]
+    pub supabase_service_role_key: String,
 }
 
 /// Get the config.json file path

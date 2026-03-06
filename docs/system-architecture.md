@@ -61,7 +61,7 @@ Tauri v2 desktop app with Rust backend and React frontend. All crypto operations
 ```
 ~/.env-butler/
 ├── projects.json    # Project slugs, paths, sync state
-└── config.json      # Supabase URL + anon key
+└── config.json      # Supabase URL + service role key
 ```
 
 ## Supabase Schema

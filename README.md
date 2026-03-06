@@ -33,7 +33,7 @@ Run the migration in your Supabase SQL Editor:
 1. Open Env Butler → enter your project path and slug
 2. Set your Master Key (never stored or transmitted)
 3. Save your 24-word Recovery Kit offline
-4. Enter your Supabase URL + anon key in Settings
+4. Enter your Supabase URL + Service Role Key in Settings
 
 ### 4. Sync
 

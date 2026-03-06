@@ -44,6 +44,7 @@ anyhow = "1.0"
 thiserror = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 zeroize = { version = "1", features = ["derive"] }
+urlencoding = "2"
 tauri-plugin-dialog = "2.6.0"
 tauri-plugin-fs = "2.4.5"
 

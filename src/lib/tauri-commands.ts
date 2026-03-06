@@ -77,7 +77,7 @@ export type ConflictStatus = "InSync" | "SafePull" | "PushReminder" | "Conflict"
 
 export interface SupabaseConfig {
   supabase_url: string;
-  supabase_anon_key: string;
+  supabase_service_role_key: string;
 }
 
 export const pushToSupabase = (
@@ -103,8 +103,8 @@ export const decryptAndApply = (
 export const decryptForDiff = (blobHex: string, password: string) =>
   invoke<Record<string, string>>("cmd_decrypt_for_diff", { blobHex, password });
 
-export const saveSupabaseConfig = (url: string, anonKey: string) =>
-  invoke<void>("cmd_save_supabase_config", { url, anonKey });
+export const saveSupabaseConfig = (url: string, serviceRoleKey: string) =>
+  invoke<void>("cmd_save_supabase_config", { url, serviceRoleKey });
 
 export const loadSupabaseConfig = () =>
   invoke<SupabaseConfig>("cmd_load_supabase_config");
