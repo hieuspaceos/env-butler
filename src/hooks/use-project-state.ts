@@ -42,8 +42,8 @@ export function useProjectState(): ProjectState {
           setActiveSlug(slugs[0]);
         }
       }
-    } catch (e) {
-      setError(String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : typeof e === "string" ? e : JSON.stringify(e));
     } finally {
       setLoading(false);
     }

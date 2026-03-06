@@ -60,6 +60,9 @@ export const loadProjects = () =>
 export const saveProjectSlug = (path: string, slug: string) =>
   invoke<void>("cmd_save_project_slug", { path, slug });
 
+export const removeProject = (slug: string) =>
+  invoke<void>("cmd_remove_project", { slug });
+
 // -- Phase 4: Supabase sync commands --
 
 export interface VaultRecord {

@@ -19,6 +19,13 @@ import {
 import { parseEnvContent, entriesToMap } from "@/lib/env-parser";
 import { computeDiff, type DiffEntry } from "@/lib/diff-engine";
 
+// Extract readable message from Tauri invoke errors (which may be objects, not strings)
+function toErrorMessage(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (typeof e === "string") return e;
+  return JSON.stringify(e);
+}
+
 interface DashboardProps {
   onSettings: () => void;
 }
@@ -26,7 +33,8 @@ interface DashboardProps {
 type View = "idle" | "scanning" | "push-key" | "push-preview" | "pushing" | "pull-key" | "pulling" | "diff";
 
 export default function Dashboard({ onSettings }: DashboardProps) {
-  const { activeProject, scannedFiles, scan, refresh } = useProjectState();
+  const { config, activeProject, scannedFiles, scan, refresh, setActiveSlug } = useProjectState();
+  const projectSlugs = config ? Object.keys(config.projects) : [];
   const [view, setView] = useState<View>("idle");
   const [manifest, setManifest] = useState<ScannedFile[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +61,7 @@ export default function Dashboard({ onSettings }: DashboardProps) {
       setManifest(files);
       setView("push-key");
     } catch (e) {
-      setError(String(e));
+      setError(toErrorMessage(e));
       setView("idle");
     }
   }, [activeProject, scan]);
@@ -84,7 +92,7 @@ export default function Dashboard({ onSettings }: DashboardProps) {
       await refresh();
       setView("idle");
     } catch (e) {
-      setError(String(e));
+      setError(toErrorMessage(e));
       setView("idle");
     } finally {
       passwordRef.current = "";
@@ -180,7 +188,7 @@ export default function Dashboard({ onSettings }: DashboardProps) {
           setView("diff");
         }
       } catch (e) {
-        setError(String(e));
+        setError(toErrorMessage(e));
         passwordRef.current = "";
         setView("idle");
       }
@@ -203,7 +211,7 @@ export default function Dashboard({ onSettings }: DashboardProps) {
       await refresh();
       setView("idle");
     } catch (e) {
-      setError(String(e));
+      setError(toErrorMessage(e));
       setView("idle");
     }
   }, [activeProject, pullRecord, refresh]);
@@ -224,11 +232,22 @@ export default function Dashboard({ onSettings }: DashboardProps) {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-lg mx-auto space-y-6">
-        <div className="text-center">
+        <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">Env Butler</h1>
           <p className="text-sm text-muted-foreground">
             Secure .env sync — zero-knowledge encryption
           </p>
+          {projectSlugs.length > 1 && (
+            <select
+              value={activeProject?.slug ?? ""}
+              onChange={(e) => setActiveSlug(e.target.value)}
+              className="mt-2 px-3 py-1.5 rounded-md border border-input bg-background text-foreground text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {projectSlugs.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {error && (

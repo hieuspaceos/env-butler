@@ -2,7 +2,9 @@
 // Printable 4-column grid with confirmation checkbox.
 
 import { useState } from "react";
-import { Printer, ShieldCheck } from "lucide-react";
+import { Download, ShieldCheck } from "lucide-react";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 
 interface RecoveryKitDisplayProps {
   mnemonic: string;
@@ -16,8 +18,18 @@ export default function RecoveryKitDisplay({
   const [saved, setSaved] = useState(false);
   const words = mnemonic.split(" ");
 
-  const handlePrint = () => {
-    window.print();
+  const handleSave = async () => {
+    const content = words.map((w, i) => `${String(i + 1).padStart(2)}. ${w}`).join("\n");
+    const text = `ENV BUTLER — RECOVERY KIT\n${"=".repeat(30)}\n\n${content}\n\nKeep this file safe and offline.\nIf you lose both your Master Key and this Recovery Kit, your data cannot be recovered.\n`;
+
+    const filePath = await save({
+      title: "Save Recovery Kit",
+      defaultPath: "env-butler-recovery-kit.txt",
+      filters: [{ name: "Text", extensions: ["txt"] }],
+    });
+    if (filePath) {
+      await writeTextFile(filePath, text);
+    }
   };
 
   return (
@@ -47,11 +59,11 @@ export default function RecoveryKitDisplay({
 
       <div className="flex justify-center">
         <button
-          onClick={handlePrint}
+          onClick={handleSave}
           className="flex items-center gap-2 px-4 py-2 rounded-md border border-border text-sm hover:bg-muted"
         >
-          <Printer className="w-4 h-4" />
-          Print / Save as PDF
+          <Download className="w-4 h-4" />
+          Save Recovery Kit
         </button>
       </div>
 

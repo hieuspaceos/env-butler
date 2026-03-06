@@ -82,6 +82,11 @@ async fn cmd_save_project_slug(path: String, slug: String) -> Result<(), AppErro
     meta::upsert_project(&slug, &path)
 }
 
+#[tauri::command]
+async fn cmd_remove_project(slug: String) -> Result<(), AppError> {
+    meta::remove_project(&slug)
+}
+
 // -- Phase 4: Supabase sync commands --
 
 #[tauri::command]
@@ -172,6 +177,8 @@ async fn cmd_load_supabase_config() -> Result<SupabaseConfig, AppError> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -190,6 +197,7 @@ pub fn run() {
             cmd_validate_mnemonic,
             cmd_load_projects,
             cmd_save_project_slug,
+            cmd_remove_project,
             cmd_push_to_supabase,
             cmd_pull_from_supabase,
             cmd_check_conflict,

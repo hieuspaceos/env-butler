@@ -1,23 +1,32 @@
 #![deny(unsafe_code)]
 
 /// Application-wide error type exposed to Tauri frontend.
-/// All variants serialize to JSON for the React UI to handle.
-#[derive(Debug, thiserror::Error, serde::Serialize)]
+/// Serializes as a plain string (via Display) so the React UI gets readable messages.
+#[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error("Security block: {0}")]
+    #[error("{0}")]
     SecurityBlock(String),
 
-    #[error("Crypto error: {0}")]
+    #[error("{0}")]
     Crypto(String),
 
-    #[error("IO error: {0}")]
+    #[error("{0}")]
     Io(String),
 
-    #[error("Not found: {0}")]
+    #[error("{0}")]
     NotFound(String),
 
-    #[error("Supabase error: {0}")]
+    #[error("{0}")]
     Supabase(String),
+}
+
+impl serde::Serialize for AppError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
 }
 
 impl From<std::io::Error> for AppError {

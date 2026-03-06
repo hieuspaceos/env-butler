@@ -2,7 +2,7 @@
 // User must scroll through the full manifest before the confirm button enables.
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import { AlertTriangle, Shield, X } from "lucide-react";
+import { Info, Shield, X } from "lucide-react";
 import type { ScannedFile } from "@/lib/tauri-commands";
 
 interface PushPreviewModalProps {
@@ -64,9 +64,9 @@ export default function PushPreviewModal({
         </div>
 
         {hasSensitive && (
-          <div className="flex items-center gap-2 mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>Some files contain sensitive keys (STRIPE, SECRET, API_KEY, etc.)</span>
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-md bg-blue-500/10 text-blue-400 text-sm">
+            <Info className="w-4 h-4 shrink-0" />
+            <span>Sensitive keys detected — these will be encrypted with AES-256-GCM before upload</span>
           </div>
         )}
 
@@ -84,7 +84,7 @@ export default function PushPreviewModal({
               <div>
                 <span className="font-mono text-sm">{file.filename}</span>
                 {file.has_sensitive_keys && (
-                  <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-destructive/20 text-destructive">
+                  <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400">
                     sensitive
                   </span>
                 )}

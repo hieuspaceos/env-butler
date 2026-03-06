@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { KeyRound, FolderOpen, Database, CheckCircle2 } from "lucide-react";
+import { open } from "@tauri-apps/plugin-dialog";
 import RecoveryKitDisplay from "@/components/recovery-kit-display";
 import { generateRecoveryKit, saveProjectSlug } from "@/lib/tauri-commands";
 
@@ -34,7 +35,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       await saveProjectSlug(projectPath, slug.trim());
       setStep("master-key");
     } catch (err) {
-      setError(String(err));
+      setError(err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err));
     } finally {
       setLoading(false);
     }
@@ -66,7 +67,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       setMnemonic(phrase);
       setStep("recovery");
     } catch (err) {
-      setError(String(err));
+      setError(err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err));
     } finally {
       setLoading(false);
     }
@@ -125,14 +126,27 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               <p className="text-muted-foreground mt-1">Set up your first project</p>
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Project Path</label>
-              <input
-                type="text"
-                value={projectPath}
-                onChange={(e) => setProjectPath(e.target.value)}
-                placeholder="/Users/you/projects/my-app"
-                className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+              <label className="block text-sm font-medium">Project Folder</label>
+              <button
+                type="button"
+                onClick={async () => {
+                  const selected = await open({ directory: true, multiple: false, title: "Select project folder" });
+                  if (selected) {
+                    const folderPath = selected as string;
+                    setProjectPath(folderPath);
+                    // Auto-populate slug from folder name
+                    const folderName = folderPath.split(/[/\\]/).filter(Boolean).pop() || "";
+                    const autoSlug = folderName.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
+                    if (!slug) setSlug(autoSlug);
+                  }
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background text-left hover:bg-muted transition-colors"
+              >
+                <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className={projectPath ? "text-foreground truncate" : "text-muted-foreground"}>
+                  {projectPath || "Click to select folder..."}
+                </span>
+              </button>
             </div>
             <div className="space-y-2">
               <label className="block text-sm font-medium">Project Slug</label>

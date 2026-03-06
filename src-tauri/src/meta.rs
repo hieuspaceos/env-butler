@@ -83,6 +83,13 @@ pub fn upsert_project(slug: &str, project_path: &str) -> Result<(), AppError> {
     save_projects(&config)
 }
 
+/// Remove a project by slug.
+pub fn remove_project(slug: &str) -> Result<(), AppError> {
+    let mut config = load_projects()?;
+    config.projects.remove(slug);
+    save_projects(&config)
+}
+
 /// Update sync state after a successful push/pull.
 pub fn update_sync_state(slug: &str, hash: &str) -> Result<(), AppError> {
     let mut config = load_projects()?;
