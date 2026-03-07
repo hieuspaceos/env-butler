@@ -11,15 +11,17 @@
 //! 6. Push updated blob + format_version=2 to Supabase
 //! 7. Store owner as first vault_member
 
+use zeroize::Zeroizing;
+
 use crate::envelope;
 use crate::error::AppError;
-use crate::supabase_team::{VaultMember};
+use crate::supabase_team::VaultMember;
 
 /// Result of a successful v1 → v2 migration
 #[derive(Debug, Clone)]
 pub struct MigrationResult {
-    /// The new random Vault Key (caller should zeroize after use)
-    pub vault_key: [u8; 32],
+    /// The new random Vault Key (auto-zeroized on drop)
+    pub vault_key: Zeroizing<[u8; 32]>,
     /// Vault Key wrapped with owner's passphrase
     pub wrapped_vault_key: Vec<u8>,
     /// Owner's member_id (key hash)

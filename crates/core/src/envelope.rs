@@ -12,18 +12,34 @@ use aes_gcm::{
 use rand::rngs::OsRng;
 use rand::RngCore;
 use sha2::{Digest, Sha256};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 use crate::crypto;
 use crate::error::AppError;
 
 const NONCE_LEN: usize = 12;
 
+/// Minimum passphrase length for team member passphrases.
+/// Prevents weak passphrases that could be brute-forced via the fixed-salt member_id.
+const MIN_PASSPHRASE_LEN: usize = 12;
+
+/// Validate passphrase meets minimum strength requirements.
+fn validate_passphrase(passphrase: &str) -> Result<(), AppError> {
+    if passphrase.len() < MIN_PASSPHRASE_LEN {
+        return Err(AppError::Validation(format!(
+            "Passphrase too short (minimum {} characters)",
+            MIN_PASSPHRASE_LEN
+        )));
+    }
+    Ok(())
+}
+
 /// Generate a random 256-bit Vault Key for encrypting vault data.
-pub fn generate_vault_key() -> [u8; 32] {
+/// Wrapped in Zeroizing to auto-clear from memory on drop.
+pub fn generate_vault_key() -> Zeroizing<[u8; 32]> {
     let mut key = [0u8; 32];
     OsRng.fill_bytes(&mut key);
-    key
+    Zeroizing::new(key)
 }
 
 /// Encrypt plaintext directly with a raw 256-bit key (no Argon2 derivation).
@@ -66,13 +82,15 @@ pub fn decrypt_with_key(blob: &[u8], key: &[u8; 32]) -> Result<Vec<u8>, AppError
 
 /// Wrap (encrypt) a Vault Key with a member's passphrase.
 /// Uses Argon2id derivation via the existing crypto module.
+/// Enforces minimum passphrase length to prevent brute-force attacks.
 pub fn wrap_key(vault_key: &[u8; 32], passphrase: &str) -> Result<Vec<u8>, AppError> {
+    validate_passphrase(passphrase)?;
     crypto::encrypt(vault_key, passphrase)
 }
 
 /// Unwrap (decrypt) a Vault Key using a member's passphrase.
-/// Returns the 32-byte Vault Key.
-pub fn unwrap_key(wrapped: &[u8], passphrase: &str) -> Result<[u8; 32], AppError> {
+/// Returns the 32-byte Vault Key wrapped in Zeroizing for auto-cleanup.
+pub fn unwrap_key(wrapped: &[u8], passphrase: &str) -> Result<Zeroizing<[u8; 32]>, AppError> {
     let decrypted = crypto::decrypt(wrapped, passphrase)?;
     if decrypted.len() != 32 {
         return Err(AppError::Crypto(format!(
@@ -82,7 +100,7 @@ pub fn unwrap_key(wrapped: &[u8], passphrase: &str) -> Result<[u8; 32], AppError
     }
     let mut key = [0u8; 32];
     key.copy_from_slice(&decrypted);
-    Ok(key)
+    Ok(Zeroizing::new(key))
 }
 
 /// Compute a member identity hash from their passphrase.
@@ -90,6 +108,7 @@ pub fn unwrap_key(wrapped: &[u8], passphrase: &str) -> Result<[u8; 32], AppError
 /// The fixed salt is acceptable here because we only need a stable identifier,
 /// not protection against brute-force (the wrapped key blob has its own random salt).
 pub fn compute_member_id(passphrase: &str) -> Result<String, AppError> {
+    validate_passphrase(passphrase)?;
     // Use a fixed, application-specific salt for deterministic member ID derivation
     let id_salt = b"env-butler-member-id-v2";
     let mut derived = crate::crypto::derive_key_with_salt(passphrase, id_salt)?;

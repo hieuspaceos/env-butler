@@ -10,6 +10,25 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::AppError;
 
+/// Validate Supabase URL format — must be https://<subdomain>.supabase.co.
+/// Prevents bypasses like `evil.supabase.co.attacker.com`.
+pub fn validate_supabase_url(url: &str) -> Result<(), AppError> {
+    let valid = url
+        .strip_prefix("https://")
+        .and_then(|rest| rest.split('/').next())
+        .map(|host_port| {
+            let host = host_port.split(':').next().unwrap_or("");
+            host.ends_with(".supabase.co") && !host.starts_with('.')
+        })
+        .unwrap_or(false);
+    if !valid {
+        return Err(AppError::Validation(
+            "Invalid Supabase URL. Expected format: https://xxx.supabase.co".into(),
+        ));
+    }
+    Ok(())
+}
+
 /// Top-level projects.json structure
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ProjectsConfig {

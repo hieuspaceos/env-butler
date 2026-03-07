@@ -233,11 +233,7 @@ pub fn cmd_status() -> Result<(), AppError> {
 }
 
 pub fn cmd_config(url: &str, key: &str, anon_key: Option<&str>) -> Result<(), AppError> {
-    if !url.starts_with("https://") || !url.contains(".supabase.co") {
-        return Err(AppError::Validation(
-            "Invalid Supabase URL. Expected format: https://xxx.supabase.co".into(),
-        ));
-    }
+    meta::validate_supabase_url(url)?;
     if !key.starts_with("eyJ") {
         return Err(AppError::Validation(
             "Invalid key format. Use your Supabase Service Role Key (starts with eyJ...).".into(),

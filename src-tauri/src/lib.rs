@@ -21,7 +21,9 @@ fn validate_file_path(
     let resolved = target
         .parent()
         .and_then(|p| p.canonicalize().ok())
-        .unwrap_or_else(|| project_dir.to_path_buf());
+        .ok_or_else(|| {
+            AppError::SecurityBlock(format!("Cannot resolve parent directory for: {filename}"))
+        })?;
     if !resolved.starts_with(project_dir) {
         return Err(AppError::SecurityBlock(format!(
             "Path traversal blocked: {filename}"
@@ -215,11 +217,7 @@ async fn cmd_save_supabase_config(
     anon_key: Option<String>,
 ) -> Result<(), AppError> {
     // Validate Supabase URL format
-    if !url.starts_with("https://") || !url.contains(".supabase.co") {
-        return Err(AppError::Validation(
-            "Invalid Supabase URL. Expected format: https://xxx.supabase.co".into(),
-        ));
-    }
+    meta::validate_supabase_url(&url)?;
     if !service_role_key.starts_with("eyJ") {
         return Err(AppError::Validation(
             "Invalid key format. Use your Supabase Service Role Key (starts with eyJ...).".into(),

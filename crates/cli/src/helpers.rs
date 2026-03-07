@@ -64,6 +64,20 @@ pub fn write_files_to_dir(
             )));
         }
         let target = canonical.join(filename);
+        // Canonicalize parent to catch symlink traversals
+        let resolved_parent = target
+            .parent()
+            .and_then(|p| p.canonicalize().ok())
+            .ok_or_else(|| {
+                AppError::SecurityBlock(format!(
+                    "Cannot resolve parent directory for: {filename}"
+                ))
+            })?;
+        if !resolved_parent.starts_with(&canonical) {
+            return Err(AppError::SecurityBlock(format!(
+                "Path traversal blocked: {filename}"
+            )));
+        }
         std::fs::write(&target, content)?;
         println!("  Wrote {}", filename);
         written.push(filename.clone());

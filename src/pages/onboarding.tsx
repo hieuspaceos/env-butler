@@ -6,6 +6,7 @@ import { KeyRound, FolderOpen, Database, CheckCircle2 } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import RecoveryKitDisplay from "@/components/recovery-kit-display";
 import { generateRecoveryKit, saveProjectSlug, saveSupabaseConfig } from "@/lib/tauri-commands";
+import { toErrorMessage } from "@/lib/error-utils";
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -17,7 +18,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState<Step>("slug");
   const [slug, setSlug] = useState("");
   const [projectPath, setProjectPath] = useState("");
-  const [mnemonic, setMnemonic] = useState("");
+  // Store mnemonic in ref to avoid exposure in React DevTools / fiber tree
+  const mnemonicRef = useRef("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +36,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       await saveProjectSlug(projectPath, slug.trim());
       setStep("master-key");
     } catch (err) {
-      setError(err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err));
+      setError(toErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -45,10 +47,10 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       setLoading(true);
       setError(null);
       const phrase = await generateRecoveryKit();
-      setMnemonic(phrase);
+      mnemonicRef.current = phrase;
       setStep("recovery");
     } catch (err) {
-      setError(err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err));
+      setError(toErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -70,7 +72,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         await saveSupabaseConfig(url, key);
         setStep("done");
       } catch (err) {
-        setError(err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err));
+        setError(toErrorMessage(err));
         setLoading(false);
         return;
       } finally {
@@ -197,8 +199,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         )}
 
         {/* Step: Recovery Kit — display and save mnemonic */}
-        {step === "recovery" && mnemonic && (
-          <RecoveryKitDisplay mnemonic={mnemonic} onConfirm={handleRecoveryConfirm} />
+        {step === "recovery" && mnemonicRef.current && (
+          <RecoveryKitDisplay mnemonic={mnemonicRef.current} onConfirm={handleRecoveryConfirm} />
         )}
 
         {/* Step: Supabase Config */}
