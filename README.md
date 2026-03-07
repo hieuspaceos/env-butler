@@ -6,7 +6,7 @@ Secure `.env` sync tool for developers. Zero-knowledge encryption, cross-machine
 
 - **Zero-Knowledge Encryption** — AES-256-GCM + Argon2id. Your Master Key never leaves your machine.
 - **Surgical Butler Safety** — 3-layer protection prevents syncing SSH keys, certificates, or binary files.
-- **BIP39 Recovery Kit** — 12-word mnemonic (same standard as Bitcoin wallets) for Master Key recovery.
+- **BIP39 Recovery Kit** — 24-word mnemonic (same standard as Bitcoin wallets) for Master Key recovery.
 - **Hash-Based Conflict Detection** — Variable-level masked diff view when local and remote diverge.
 - **3 Sync Methods** — Supabase cloud, folder-based (Google Drive/iCloud/Dropbox), or portable `.envbutler` files.
 - **Team Sharing** — Invite tokens let team members access shared vaults. No auth server needed.
@@ -26,7 +26,7 @@ Download from [Releases](../../releases) — macOS (universal `.dmg`) or Windows
 
 1. Open Env Butler → enter your project path and slug
 2. Set your Master Key (never stored or transmitted)
-3. Save your 12-word Recovery Kit offline
+3. Save your 24-word Recovery Kit offline
 4. Enter your Supabase URL + Service Role Key in Settings
 5. **Push/Pull** to sync via Supabase, Google Drive, iCloud, or Dropbox
 

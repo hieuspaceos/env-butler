@@ -461,7 +461,7 @@ fn cmd_config(url: &str, key: &str) -> Result<(), AppError> {
 
 fn cmd_recovery_generate() -> Result<(), AppError> {
     let mnemonic = recovery::generate_mnemonic()?;
-    println!("Recovery Mnemonic (BIP39 — 12 words):");
+    println!("Recovery Mnemonic (BIP39 — 24 words):");
     println!();
     println!("  {}", mnemonic);
     println!();
@@ -471,7 +471,7 @@ fn cmd_recovery_generate() -> Result<(), AppError> {
 }
 
 fn cmd_recovery_restore() -> Result<(), AppError> {
-    println!("Enter your 12-word recovery mnemonic:");
+    println!("Enter your 24-word recovery mnemonic:");
     let mut mnemonic = String::new();
     std::io::stdin()
         .read_line(&mut mnemonic)
