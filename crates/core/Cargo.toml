@@ -23,6 +23,9 @@ zeroize = { version = "1", features = ["derive"] }
 # Recovery
 tiny-bip39 = "1.0"
 
+# UUID for invite codes
+uuid = { version = "1", features = ["v4"] }
+
 # File handling
 zip = "0.6"
 

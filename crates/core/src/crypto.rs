@@ -20,6 +20,12 @@ const ARGON2_M_COST: u32 = 65536;
 const ARGON2_T_COST: u32 = 3;
 const ARGON2_P_COST: u32 = 1;
 
+/// Derive a 32-byte AES key from password + caller-provided salt using Argon2id.
+/// Used by envelope module for deterministic member ID derivation.
+pub fn derive_key_with_salt(password: &str, salt: &[u8]) -> Result<[u8; 32], AppError> {
+    derive_key(password, salt)
+}
+
 /// Derive a 32-byte AES key from password + salt using Argon2id.
 fn derive_key(password: &str, salt: &[u8]) -> Result<[u8; 32], AppError> {
     let params = Params::new(ARGON2_M_COST, ARGON2_T_COST, ARGON2_P_COST, Some(32))

@@ -95,6 +95,7 @@ export type ConflictStatus = "InSync" | "SafePull" | "PushReminder" | "Conflict"
 export interface SupabaseConfig {
   supabase_url: string;
   supabase_service_role_key: string;
+  supabase_anon_key: string | null;
   sync_folder: string | null;
 }
 
@@ -121,8 +122,8 @@ export const decryptAndApply = (
 export const decryptForDiff = (blobHex: string, password: string) =>
   invoke<Record<string, string>>("cmd_decrypt_for_diff", { blobHex, password });
 
-export const saveSupabaseConfig = (url: string, serviceRoleKey: string) =>
-  invoke<void>("cmd_save_supabase_config", { url, serviceRoleKey });
+export const saveSupabaseConfig = (url: string, serviceRoleKey: string, anonKey?: string) =>
+  invoke<void>("cmd_save_supabase_config", { url, serviceRoleKey, anonKey: anonKey ?? null });
 
 export const loadSupabaseConfig = () =>
   invoke<SupabaseConfig>("cmd_load_supabase_config");
@@ -160,3 +161,61 @@ export const writeEnvFiles = (projectPath: string, files: Record<string, string>
 
 export const readEnvContents = (path: string) =>
   invoke<Record<string, string>>("cmd_read_env_contents", { path });
+
+// -- Team v2 commands (envelope encryption) --
+
+export interface VaultMember {
+  id: string | null;
+  vault_slug: string;
+  member_id: string;
+  wrapped_vault_key: string;
+  role: string;
+  created_by: string | null;
+  created_at: string | null;
+  revoked_at: string | null;
+}
+
+export interface InviteV2Result {
+  token_bytes: number[];
+  invite_code: string;
+}
+
+export interface JoinV2Result {
+  vault_slug: string;
+  member_id: string;
+  created_by: string;
+  status: string;
+}
+
+export interface MigrateV2Result {
+  owner_member_id: string;
+  backup_blob: string;
+}
+
+export const teamInviteV2 = (slug: string, createdBy: string) =>
+  invoke<InviteV2Result>("cmd_team_invite_v2", { slug, createdBy });
+
+export const teamJoinV2 = (fileBytes: number[], memberPassphrase: string, projectPath: string) =>
+  invoke<JoinV2Result>("cmd_team_join_v2", { fileBytes, memberPassphrase, projectPath });
+
+export const teamApproveMember = (
+  vaultSlug: string,
+  memberId: string,
+  ownerMnemonic: string,
+  tempPassphrase: string,
+) => invoke<void>("cmd_team_approve_member", { vaultSlug, memberId, ownerMnemonic, tempPassphrase });
+
+export const teamActivateMembership = (
+  vaultSlug: string,
+  tempPassphrase: string,
+  memberPassphrase: string,
+) => invoke<void>("cmd_team_activate_membership", { vaultSlug, tempPassphrase, memberPassphrase });
+
+export const teamListMembers = (vaultSlug: string) =>
+  invoke<VaultMember[]>("cmd_team_list_members", { vaultSlug });
+
+export const teamRevokeMember = (vaultSlug: string, memberId: string) =>
+  invoke<void>("cmd_team_revoke_member", { vaultSlug, memberId });
+
+export const vaultMigrateV2 = (vaultSlug: string, ownerMnemonic: string) =>
+  invoke<MigrateV2Result>("cmd_vault_migrate_v2", { vaultSlug, ownerMnemonic });

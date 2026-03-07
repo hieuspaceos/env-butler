@@ -111,16 +111,16 @@ pub fn get_project(slug: &str) -> Result<Option<ProjectEntry>, AppError> {
 // -- Supabase config management --
 
 /// Supabase connection config stored in ~/.env-butler/config.json
-/// Uses service_role key (not anon key) to bypass RLS — safe because self-hosted.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SupabaseConfig {
     pub supabase_url: String,
-    /// Service role key — has full DB access, bypasses RLS.
-    /// Safe for self-hosted single-user: the key stays local on user's machine.
-    #[serde(alias = "supabase_anon_key")]
+    /// Service role key — full DB access, bypasses RLS. Used by owner for admin ops.
     pub supabase_service_role_key: String,
+    /// Anon key — respects RLS. Used by members for scoped access (Team v2).
+    /// Owner provides this when setting up the vault; shared via invite.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub supabase_anon_key: Option<String>,
     /// Optional sync folder path (Google Drive, iCloud, Dropbox, etc.)
-    /// When set, Push/Pull can use this folder instead of Supabase.
     #[serde(default)]
     pub sync_folder: Option<String>,
 }

@@ -61,6 +61,9 @@ enum Commands {
         /// Supabase service role key
         #[arg(long)]
         key: String,
+        /// Supabase anon key (optional, required for Team v2)
+        #[arg(long)]
+        anon_key: Option<String>,
     },
     /// Recovery kit management
     Recovery {
@@ -89,13 +92,43 @@ enum RecoveryAction {
 
 #[derive(Subcommand)]
 enum TeamAction {
-    /// Generate an invite token for a team member
+    /// Generate a v2 invite token (envelope encryption, no secrets shared)
+    InviteV2 {
+        /// Output file path (defaults to {slug}-v2.envbutler-team)
+        #[arg(short, long)]
+        output: Option<String>,
+    },
+    /// Join a v2 team vault using an invite token
+    JoinV2 {
+        /// Path to .envbutler-team file
+        file: String,
+    },
+    /// Owner approves a pending member (wraps vault key with temp passphrase)
+    Approve {
+        /// Member ID (hex hash from 'team list')
+        member_id: String,
+        /// Temp passphrase to share with the member out-of-band
+        #[arg(long)]
+        passphrase: String,
+    },
+    /// Member activates their membership using temp passphrase from owner
+    Activate,
+    /// List active members for the current vault
+    List,
+    /// Revoke a member's access
+    Revoke {
+        /// Member ID (hex hash from 'team list')
+        member_id: String,
+    },
+    /// Migrate vault from v1 (password-based) to v2 (envelope encryption)
+    Migrate,
+    /// Generate an invite token for a team member (legacy v1)
     Invite {
         /// Output file path (defaults to {slug}.envbutler-team)
         #[arg(short, long)]
         output: Option<String>,
     },
-    /// Join a team vault using an invite token
+    /// Join a team vault using a legacy v1 invite token
     Join {
         /// Path to .envbutler-team file
         file: String,
@@ -134,12 +167,19 @@ async fn run(cli: Cli) -> Result<(), AppError> {
         Commands::FolderPush => sync_commands::cmd_folder_push()?,
         Commands::FolderPull { force } => sync_commands::cmd_folder_pull(force)?,
         Commands::Status => sync_commands::cmd_status()?,
-        Commands::Config { url, key } => sync_commands::cmd_config(&url, &key)?,
+        Commands::Config { url, key, anon_key } => sync_commands::cmd_config(&url, &key, anon_key.as_deref())?,
         Commands::Recovery { action } => match action {
             RecoveryAction::Generate => sync_commands::cmd_recovery_generate()?,
             RecoveryAction::Restore => sync_commands::cmd_recovery_restore()?,
         },
         Commands::Team { action } => match action {
+            TeamAction::InviteV2 { output } => team_commands::cmd_team_invite_v2(output).await?,
+            TeamAction::JoinV2 { file } => team_commands::cmd_team_join_v2(&file).await?,
+            TeamAction::Approve { member_id, passphrase } => team_commands::cmd_team_approve(&member_id, &passphrase).await?,
+            TeamAction::Activate => team_commands::cmd_team_activate().await?,
+            TeamAction::List => team_commands::cmd_team_list().await?,
+            TeamAction::Revoke { member_id } => team_commands::cmd_team_revoke(&member_id).await?,
+            TeamAction::Migrate => team_commands::cmd_team_migrate().await?,
             TeamAction::Invite { output } => team_commands::cmd_team_invite(output)?,
             TeamAction::Join { file } => team_commands::cmd_team_join(&file)?,
         },

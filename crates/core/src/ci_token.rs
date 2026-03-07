@@ -86,6 +86,7 @@ mod tests {
         SupabaseConfig {
             supabase_url: "https://test.supabase.co".into(),
             supabase_service_role_key: "eyJtest123".into(),
+            supabase_anon_key: None,
             sync_folder: None,
         }
     }

@@ -33,6 +33,7 @@ pub async fn cmd_ci_pull(force: bool) -> Result<(), AppError> {
     let config = meta::SupabaseConfig {
         supabase_url: payload.supabase_url.clone(),
         supabase_service_role_key: payload.supabase_key.clone(),
+        supabase_anon_key: None,
         sync_folder: payload.sync_folder.clone(),
     };
 

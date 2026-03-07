@@ -18,12 +18,14 @@ export default function Settings({ onBack }: SettingsProps) {
   const [syncFolder, setSyncFolder] = useState<string | null>(null);
   const [supabaseUrl, setSupabaseUrl] = useState("");
   const [supabaseKey, setSupabaseKey] = useState("");
+  const [supabaseAnonKey, setSupabaseAnonKey] = useState("");
 
   useEffect(() => {
     loadSupabaseConfig()
       .then((config) => {
         setSupabaseUrl(config.supabase_url);
         setSupabaseKey(config.supabase_service_role_key);
+        setSupabaseAnonKey(config.supabase_anon_key ?? "");
         setSyncFolder(config.sync_folder);
       })
       .catch(() => {});
@@ -64,7 +66,7 @@ export default function Settings({ onBack }: SettingsProps) {
 
         <SettingsProjectList projects={projects} onRefresh={refreshProjects} setError={setError} />
         <SettingsSyncFolder syncFolder={syncFolder} setSyncFolder={setSyncFolder} setError={setError} setSaved={setSaved} />
-        <SettingsSupabaseForm initialUrl={supabaseUrl} initialKey={supabaseKey} setError={setError} setSaved={setSaved} />
+        <SettingsSupabaseForm initialUrl={supabaseUrl} initialKey={supabaseKey} initialAnonKey={supabaseAnonKey} setError={setError} setSaved={setSaved} />
       </div>
     </div>
   );

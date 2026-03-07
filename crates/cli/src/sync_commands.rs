@@ -232,7 +232,7 @@ pub fn cmd_status() -> Result<(), AppError> {
     Ok(())
 }
 
-pub fn cmd_config(url: &str, key: &str) -> Result<(), AppError> {
+pub fn cmd_config(url: &str, key: &str, anon_key: Option<&str>) -> Result<(), AppError> {
     if !url.starts_with("https://") || !url.contains(".supabase.co") {
         return Err(AppError::Validation(
             "Invalid Supabase URL. Expected format: https://xxx.supabase.co".into(),
@@ -243,11 +243,25 @@ pub fn cmd_config(url: &str, key: &str) -> Result<(), AppError> {
             "Invalid key format. Use your Supabase Service Role Key (starts with eyJ...).".into(),
         ));
     }
+    if let Some(ak) = anon_key {
+        if !ak.is_empty() && !ak.starts_with("eyJ") {
+            return Err(AppError::Validation(
+                "Invalid anon key format. Expected JWT starting with eyJ...".into(),
+            ));
+        }
+    }
 
     let existing = meta::load_config().ok();
+    // Prefer explicitly passed anon_key; fall back to existing stored value
+    let resolved_anon = match anon_key {
+        Some(ak) if !ak.is_empty() => Some(ak.to_string()),
+        Some(_) => None, // empty string passed = clear anon key
+        None => existing.as_ref().and_then(|c| c.supabase_anon_key.clone()),
+    };
     meta::save_config(&meta::SupabaseConfig {
         supabase_url: url.to_string(),
         supabase_service_role_key: key.to_string(),
+        supabase_anon_key: resolved_anon,
         sync_folder: existing.and_then(|c| c.sync_folder),
     })?;
 
