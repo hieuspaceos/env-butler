@@ -1020,6 +1020,7 @@ dependencies = [
  "hex",
  "rpassword",
  "serde_json",
+ "tempfile",
  "tokio",
 ]
 
