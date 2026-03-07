@@ -2,7 +2,7 @@
 name = "env-butler"
 version = "0.4.0"
 description = "Secure .env sync tool with zero-knowledge encryption"
-authors = ["hieuphan94"]
+authors = ["hieuspaceos"]
 license = "MIT"
 repository = "https://github.com/hieuspaceos/env-butler"
 edition = "2021"
