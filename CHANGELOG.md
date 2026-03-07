@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.4.0 — 2026-03-07
+
+### Breaking Changes
+- **Mnemonic IS the Master Key** — BIP39 24-word mnemonic now serves as the encryption key directly. No separate custom password step. Existing vaults encrypted with old custom passwords must be re-encrypted.
+
+### Security
+- Team invite + CI token now display warnings about shared credentials
+- Onboarding saves Supabase config during setup
+- `toErrorMessage` handles null/undefined safely
+- Custom base64 replaced with `base64` crate
+
+### Improvements
+- "Anon Key" label renamed to "Service Role Key" in Settings
+- Version bumped to 0.4.0 across all manifests
+- 20 new component tests (master-key-input, diff-view, project-status-card) — 47 total frontend tests
+
+### Platforms
+- macOS (Universal), Windows (x64)
+
 ## v0.3.0 — 2026-03-07
 
 ### Features

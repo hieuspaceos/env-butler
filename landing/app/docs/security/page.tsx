@@ -114,9 +114,9 @@ Cipher  → AES-256-GCM encrypted zip archive`}
 
       {/* BIP39 */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold">BIP39 Recovery</h2>
+        <h2 className="text-xl font-semibold">BIP39 Mnemonic as Master Key</h2>
         <p className="text-zinc-400">
-          Your Recovery Kit is a 24-word mnemonic using the{" "}
+          Your Master Key is a 24-word mnemonic generated using the{" "}
           <a
             href="https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki"
             className="text-emerald-400 hover:underline"
@@ -125,18 +125,21 @@ Cipher  → AES-256-GCM encrypted zip archive`}
           >
             BIP39 standard
           </a>{" "}
-          — the same standard used by Bitcoin and Ethereum wallets.
+          — the same standard used by Bitcoin and Ethereum wallets. The mnemonic
+          IS the key — there is no separate password.
         </p>
         <ul className="list-disc pl-6 text-zinc-400 space-y-1 text-sm">
           <li>
-            Deterministic — the same 24 words always produce the same Master Key
+            Deterministic — the same 24 words always produce the same encryption key
           </li>
           <li>
             Save it offline (printed paper, password manager, safe deposit box)
           </li>
           <li>
-            Never share it — anyone with your 24 words can derive your Master
-            Key
+            Never share it — anyone with your 24 words has full access to your vault
+          </li>
+          <li>
+            Enter your mnemonic when pushing or pulling — it is never stored on disk
           </li>
         </ul>
       </section>
@@ -198,7 +201,7 @@ Get-FileHash Env-Butler_*.exe -Algorithm SHA256`}
                 ],
                 [
                   "Master Key theft",
-                  "Key is never stored on disk. Use a strong passphrase.",
+                  "Key is never stored on disk. 24-word mnemonic entered only when needed.",
                 ],
                 [
                   "Brute-force",

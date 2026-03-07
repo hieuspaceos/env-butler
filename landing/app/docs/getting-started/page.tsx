@@ -138,14 +138,10 @@ CREATE TRIGGER vault_updated_at
             <code>my-api</code>)
           </li>
           <li>
-            Set your <strong className="text-zinc-200">Master Key</strong> — a
-            strong passphrase you&apos;ll remember. This key never leaves your
-            machine.
-          </li>
-          <li>
-            Save your <strong className="text-zinc-200">Recovery Kit</strong>{" "}
-            — a 24-word mnemonic that can regenerate your Master Key. Store it
-            offline.
+            Generate your{" "}
+            <strong className="text-zinc-200">24-word mnemonic</strong> — this
+            IS your Master Key (BIP39 standard). It never leaves your machine.
+            Save it offline (paper, password manager, safe deposit box).
           </li>
         </ol>
       </section>

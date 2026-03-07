@@ -42,13 +42,21 @@
 - [x] Tauri auto-update plugin (Ed25519 signing)
 - [x] Update checker banner on dashboard
 - [x] Frontend unit tests (Vitest + React Testing Library)
-- [x] 38 Rust core tests, 27 frontend tests
+- [x] 38 Rust core tests, 47 frontend tests
 - [x] HTTPS on landing (Vercel)
-- [x] CHANGELOG.md up to date
+- [x] CHANGELOG.md up to v0.4.0
 
-## Phase 7: Future (Backlog)
-- [ ] Component-level React tests (Tauri mock integration)
+## Phase 7: v0.4.0 Breaking Changes (Complete)
+- [x] BIP39 mnemonic IS the Master Key (no separate password)
+- [x] Onboarding: generate → save mnemonic offline → done
+- [x] Team invite + CI token warn about shared credentials
+- [x] Security audit: service role key, scoped fs, unsafe_code denial
+- [x] Version to 0.4.0
+
+## Phase 8: Future (Backlog)
 - [ ] E2E tests (Playwright for full Tauri runtime)
 - [ ] Per-user envelope encryption (team v2)
 - [ ] Auto-sync on file change (file watcher)
 - [ ] Multiple Supabase instances per project
+- [ ] CI test pipeline
+- [ ] File sync write locking

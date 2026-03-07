@@ -67,15 +67,18 @@ Tauri v2 desktop app + CLI, both backed by shared Rust core. All crypto in Rust.
 ### Push
 1. Scanner finds `.env*` files (allowlist → fingerprint → preview)
 2. Vault zips all allowed files, computes SHA-256 hash
-3. Crypto encrypts zip with AES-256-GCM (key derived via Argon2id from Master Key)
-4. Supabase module upserts encrypted blob + hash to vault table
+3. User enters 24-word mnemonic (Master Key)
+4. Crypto derives encryption key via Argon2id from mnemonic, then encrypts zip with AES-256-GCM
+5. Supabase module upserts encrypted blob + hash to vault table
 
 ### Pull
 1. Supabase module fetches encrypted blob + remote hash
-2. Scanner + Vault compute local hash for comparison
-3. Conflict detection: InSync / SafePull / PushReminder / Conflict
-4. If conflict: decrypt remote, parse both sides, show variable-level diff
-5. User chooses: accept remote or keep local
+2. User enters 24-word mnemonic (Master Key)
+3. Crypto derives key via Argon2id from mnemonic, then decrypts blob with AES-256-GCM
+4. Scanner + Vault compute local hash for comparison
+5. Conflict detection: InSync / SafePull / PushReminder / Conflict
+6. If conflict: parse both sides, show variable-level diff
+7. User chooses: accept remote or keep local
 
 ### Team Sharing
 1. Inviter generates encrypted `.envbutler-team` file (AES-256-GCM + Argon2id)
@@ -121,11 +124,13 @@ vault (
 ```
 
 ## Security Model
-- Master Key: never stored, never transmitted — only held in memory during operation
-- Argon2id: memory-hard KDF, resistant to GPU/ASIC attacks
-- AES-256-GCM: authenticated encryption, tamper detection
-- Supabase sees only encrypted blobs — zero-knowledge
-- BIP39 recovery: deterministic key derivation from 24-word mnemonic
+- **Master Key (v0.4.0)**: BIP39 24-word mnemonic IS the encryption key directly — never stored, only held in memory during operation
+- **Onboarding Flow**: Generate mnemonic → user saves offline → mnemonic entered for push/pull operations
+- **Argon2id**: Memory-hard KDF, resistant to GPU/ASIC attacks (derives key material from mnemonic)
+- **AES-256-GCM**: Authenticated encryption, tamper detection
+- **Supabase**: Sees only encrypted blobs — zero-knowledge
+- **Breaking Change (v0.4.0)**: Existing vaults encrypted with old custom passwords won't work with new mnemonic-based encryption
 - `#![deny(unsafe_code)]` enforced at crate level
 - Filesystem scoped to `~/.env-butler/**` + dialog-picked paths only
 - Config files use permission 600 on Unix
+- Team invite + CI token display warnings about shared credentials

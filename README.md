@@ -25,8 +25,8 @@ Full docs at [env-butler.hieuspace.com/docs](https://env-butler.hieuspace.com/do
 Download from [Releases](../../releases) — macOS (universal `.dmg`) or Windows (`.exe`).
 
 1. Open Env Butler → enter your project path and slug
-2. Set your Master Key (never stored or transmitted)
-3. Save your 24-word Recovery Kit offline
+2. Generate your **24-word mnemonic** — this IS your Master Key (BIP39 standard, never stored or transmitted)
+3. Save the mnemonic offline (paper, password manager, safe deposit box)
 4. Enter your Supabase URL + Service Role Key in Settings
 5. **Push/Pull** to sync via Supabase, Google Drive, iCloud, or Dropbox
 
