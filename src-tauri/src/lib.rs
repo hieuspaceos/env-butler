@@ -5,6 +5,31 @@ use env_butler_core::{
 use serde::Serialize;
 use std::collections::HashMap;
 
+/// Validate filename and resolve target path with path traversal protection.
+/// Returns the validated target path within project_dir.
+fn validate_file_path(
+    filename: &str,
+    project_dir: &std::path::Path,
+) -> Result<std::path::PathBuf, AppError> {
+    if filename.contains("..") || filename.starts_with('/') || filename.starts_with('\\') {
+        return Err(AppError::SecurityBlock(format!(
+            "Blocked unsafe filename: {filename}"
+        )));
+    }
+    let target = project_dir.join(filename);
+    // Canonicalize target's parent to catch symlink traversals
+    let resolved = target
+        .parent()
+        .and_then(|p| p.canonicalize().ok())
+        .unwrap_or_else(|| project_dir.to_path_buf());
+    if !resolved.starts_with(project_dir) {
+        return Err(AppError::SecurityBlock(format!(
+            "Path traversal blocked: {filename}"
+        )));
+    }
+    Ok(target)
+}
+
 /// Encrypted vault payload returned to frontend for push
 #[derive(Debug, Serialize)]
 pub struct EncryptedPayload {
@@ -133,18 +158,7 @@ async fn cmd_decrypt_and_apply(
     let project_dir = std::path::Path::new(&project_path).canonicalize()?;
     let mut written = Vec::new();
     for (filename, content) in &files {
-        if filename.contains("..") || filename.starts_with('/') || filename.starts_with('\\') {
-            return Err(AppError::SecurityBlock(format!(
-                "Blocked unsafe filename in vault: {filename}"
-            )));
-        }
-        let target = project_dir.join(filename);
-        let resolved = target.parent().map(|p| p.to_path_buf()).unwrap_or(target.clone());
-        if !resolved.starts_with(&project_dir) {
-            return Err(AppError::SecurityBlock(format!(
-                "Path traversal blocked: {filename}"
-            )));
-        }
+        let target = validate_file_path(filename, &project_dir)?;
         std::fs::write(&target, content)?;
         written.push(filename.clone());
     }
@@ -196,6 +210,12 @@ async fn cmd_folder_pull(slug: String, password: String) -> Result<HashMap<Strin
 
 #[tauri::command]
 async fn cmd_save_supabase_config(url: String, service_role_key: String) -> Result<(), AppError> {
+    // Validate Supabase URL format
+    if !url.starts_with("https://") || !url.contains(".supabase.co") {
+        return Err(AppError::Validation(
+            "Invalid Supabase URL. Expected format: https://xxx.supabase.co".into(),
+        ));
+    }
     if !service_role_key.starts_with("eyJ") {
         return Err(AppError::Validation(
             "Invalid key format. Use your Supabase Service Role Key (starts with eyJ...).".into(),
@@ -228,10 +248,9 @@ async fn cmd_read_env_contents(path: String) -> Result<HashMap<String, String>, 
     let scanned = scanner::scan_project(&path, &[])?;
     let mut contents = HashMap::new();
     for file in scanned.iter().filter(|f| !f.blocked) {
-        match std::fs::read_to_string(&file.path) {
-            Ok(c) => { contents.insert(file.filename.clone(), c); }
-            Err(_) => {}
-        }
+        let c = std::fs::read_to_string(&file.path)
+            .map_err(|e| AppError::Io(format!("Failed to read {}: {e}", file.filename)))?;
+        contents.insert(file.filename.clone(), c);
     }
     Ok(contents)
 }
@@ -246,17 +265,7 @@ async fn cmd_write_env_files(
     let project_dir = std::path::Path::new(&project_path).canonicalize()?;
     let mut written = Vec::new();
     for (filename, content) in &files {
-        if filename.contains("..") || filename.starts_with('/') || filename.starts_with('\\') {
-            return Err(AppError::SecurityBlock(format!(
-                "Blocked unsafe filename: {filename}"
-            )));
-        }
-        let target = project_dir.join(filename);
-        if !target.parent().unwrap_or(&target).starts_with(&project_dir) {
-            return Err(AppError::SecurityBlock(format!(
-                "Path traversal blocked: {filename}"
-            )));
-        }
+        let target = validate_file_path(filename, &project_dir)?;
         std::fs::write(&target, content)?;
         written.push(filename.clone());
     }
