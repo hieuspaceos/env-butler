@@ -211,7 +211,7 @@ fn fingerprint_file(
 
     // Count env vars and detect sensitive keys
     scanned.var_count = count_env_vars(&text);
-    scanned.has_sensitive_keys = detect_sensitive_key_names(&text);
+    scanned.has_sensitive_keys |= detect_sensitive_key_names(&text);
 
     Ok(())
 }
