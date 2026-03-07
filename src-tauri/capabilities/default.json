@@ -22,7 +22,7 @@
       "identifier": "fs:allow-write-file",
       "allow": [{ "path": "$HOME/.env-butler/**" }]
     },
-    "fs:allow-read-file-with-dialog",
-    "fs:allow-write-file-with-dialog"
+    "updater:default",
+    "process:allow-restart"
   ]
 }

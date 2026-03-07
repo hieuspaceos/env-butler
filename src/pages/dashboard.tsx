@@ -6,6 +6,7 @@ import ProjectStatusCard from "@/components/project-status-card";
 import DashboardCloudSync, { type CloudSyncHandle } from "@/components/dashboard-cloud-sync";
 import DashboardFileSync from "@/components/dashboard-file-sync";
 import DashboardTeamSection from "@/components/dashboard-team-section";
+import UpdateChecker from "@/components/update-checker";
 
 interface DashboardProps {
   onSettings: () => void;
@@ -41,6 +42,9 @@ export default function Dashboard({ onSettings }: DashboardProps) {
             </select>
           )}
         </div>
+
+        {/* Update banner */}
+        <UpdateChecker />
 
         {/* Status messages */}
         {error && (
