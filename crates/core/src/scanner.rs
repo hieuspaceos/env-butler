@@ -1,5 +1,3 @@
-#![deny(unsafe_code)]
-
 //! Surgical Butler: 3-layer safety system for .env file scanning.
 //! Layer 1: strict allowlist filter
 //! Layer 2: content fingerprinting (block SSH keys, certs, binary, oversized files)
@@ -32,6 +30,7 @@ const BLOCK_CONTENT_PATTERNS: &[&str] = &[
     "-----BEGIN EC PRIVATE KEY-----",
     "-----BEGIN PRIVATE KEY-----",
     "-----BEGIN DSA PRIVATE KEY-----",
+    "-----BEGIN PGP PRIVATE KEY BLOCK-----",
 ];
 
 // Layer 2: content patterns that WARN but don't block

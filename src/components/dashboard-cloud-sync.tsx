@@ -8,6 +8,7 @@ import {
   encryptAndPrepare,
   pushToSupabase,
   pullFromSupabase,
+  readEnvContents,
   checkConflict,
   decryptAndApply,
   decryptForDiff,
@@ -116,10 +117,9 @@ export default forwardRef<CloudSyncHandle, Props>(function DashboardCloudSync(
       } else {
         // Conflict — show diff
         const remoteFiles = await decryptForDiff(record.encrypted_blob, password);
+        const localContents = await readEnvContents(activeProject.path);
         const localKV: Record<string, string> = {};
-        for (const file of localFiles) {
-          try { const c = await fetch(`file://${file.path}`).then((r) => r.text()); Object.assign(localKV, entriesToMap(parseEnvContent(c))); } catch { /* skip */ }
-        }
+        for (const content of Object.values(localContents)) Object.assign(localKV, entriesToMap(parseEnvContent(content)));
         const remoteKV: Record<string, string> = {};
         for (const content of Object.values(remoteFiles)) Object.assign(remoteKV, entriesToMap(parseEnvContent(content)));
         setDiffEntries(computeDiff(localKV, remoteKV)); setView("diff");

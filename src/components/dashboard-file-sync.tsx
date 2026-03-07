@@ -10,6 +10,7 @@ import {
   folderPush,
   folderPull,
   loadSupabaseConfig,
+  writeEnvFiles,
   type ProjectEntry,
 } from "@/lib/tauri-commands";
 import { toErrorMessage } from "@/lib/error-utils";
@@ -83,12 +84,8 @@ export default function DashboardFileSync({ activeProject, refresh, setError, se
     if (!activeProject) return;
     try {
       setView("importing");
-      const projectDir = activeProject.path;
-      for (const [filename, content] of Object.entries(importedFiles)) {
-        if (filename.includes("..") || filename.startsWith("/")) continue;
-        await writeFile(`${projectDir}/${filename}`, new TextEncoder().encode(content));
-      }
-      setInfo(`Imported ${Object.keys(importedFiles).length} files`);
+      const written = await writeEnvFiles(activeProject.path, importedFiles);
+      setInfo(`Imported ${written.length} files`);
       setImportedFiles({}); await refresh(); setView("idle");
     } catch (e) { setError(toErrorMessage(e)); setView("idle"); }
   }, [activeProject, importedFiles, refresh, setError, setInfo]);
@@ -116,12 +113,8 @@ export default function DashboardFileSync({ activeProject, refresh, setError, se
     if (!activeProject) return;
     try {
       setView("file-pulling");
-      const projectDir = activeProject.path;
-      for (const [filename, content] of Object.entries(filePullFiles)) {
-        if (filename.includes("..") || filename.startsWith("/")) continue;
-        await writeFile(`${projectDir}/${filename}`, new TextEncoder().encode(content));
-      }
-      setInfo(`Pulled ${Object.keys(filePullFiles).length} files from sync folder`);
+      const written = await writeEnvFiles(activeProject.path, filePullFiles);
+      setInfo(`Pulled ${written.length} files from sync folder`);
       setFilePullFiles({}); await refresh(); setView("idle");
     } catch (e) { setError(toErrorMessage(e)); setView("idle"); }
   }, [activeProject, filePullFiles, refresh, setError, setInfo]);

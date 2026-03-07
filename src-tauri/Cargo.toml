@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Secure .env sync tool with zero-knowledge encryption"
 authors = ["hieuphan94"]
 license = "MIT"
-repository = "https://github.com/hieuphan94/env-butler"
+repository = "https://github.com/hieuspaceos/env-butler"
 edition = "2021"
 rust-version = "1.77.2"
 

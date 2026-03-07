@@ -1,5 +1,3 @@
-#![deny(unsafe_code)]
-
 //! ~/.env-butler/ metadata directory management.
 //! Tracks project slugs, paths, and sync state in projects.json.
 
@@ -149,6 +147,14 @@ pub fn save_config(config: &SupabaseConfig) -> Result<(), AppError> {
     let content = serde_json::to_string_pretty(config)
         .map_err(|e| AppError::Io(format!("Serialize config.json: {e}")))?;
     fs::write(&path, content)?;
+
+    // Set file permission 600 (owner read/write only) — config contains service_role key
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600))?;
+    }
+
     Ok(())
 }
 

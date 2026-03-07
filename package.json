@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hieuphan94/env-butler.git"
+    "url": "git+https://github.com/hieuspaceos/env-butler.git"
   },
   "license": "MIT",
   "dependencies": {

@@ -152,3 +152,11 @@ export const teamJoin = (
   passphrase: string,
   projectPath: string,
 ) => invoke<InvitePayload>("cmd_team_join", { fileBytes, passphrase, projectPath });
+
+// -- Write env files to project dir (with path traversal protection in Rust) --
+
+export const writeEnvFiles = (projectPath: string, files: Record<string, string>) =>
+  invoke<string[]>("cmd_write_env_files", { projectPath, files });
+
+export const readEnvContents = (path: string) =>
+  invoke<Record<string, string>>("cmd_read_env_contents", { path });

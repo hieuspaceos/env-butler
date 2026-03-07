@@ -1,5 +1,3 @@
-#![deny(unsafe_code)]
-
 //! AES-256-GCM encryption + Argon2id key derivation.
 //! Blob format: [salt 16B][nonce 12B][ciphertext...]
 

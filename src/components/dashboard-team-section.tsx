@@ -80,7 +80,7 @@ export default function DashboardTeamSection({ activeProject, refresh, setError,
       setJoinResult(payload);
       await refresh();
       setView("join-success");
-    } catch (e) { setError(toErrorMessage(e)); setView("idle"); }
+    } catch (e) { joinFileRef.current = null; setError(toErrorMessage(e)); setView("idle"); }
   }, [activeProject, refresh, setError]);
 
   if (!activeProject) return null;

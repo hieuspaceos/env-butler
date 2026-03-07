@@ -221,6 +221,48 @@ async fn cmd_load_supabase_config() -> Result<SupabaseConfig, AppError> {
     meta::load_config()
 }
 
+// -- Read local env files for diff comparison --
+
+#[tauri::command]
+async fn cmd_read_env_contents(path: String) -> Result<HashMap<String, String>, AppError> {
+    let scanned = scanner::scan_project(&path, &[])?;
+    let mut contents = HashMap::new();
+    for file in scanned.iter().filter(|f| !f.blocked) {
+        match std::fs::read_to_string(&file.path) {
+            Ok(c) => { contents.insert(file.filename.clone(), c); }
+            Err(_) => {}
+        }
+    }
+    Ok(contents)
+}
+
+// -- Write env files to project dir (with path traversal protection) --
+
+#[tauri::command]
+async fn cmd_write_env_files(
+    project_path: String,
+    files: HashMap<String, String>,
+) -> Result<Vec<String>, AppError> {
+    let project_dir = std::path::Path::new(&project_path).canonicalize()?;
+    let mut written = Vec::new();
+    for (filename, content) in &files {
+        if filename.contains("..") || filename.starts_with('/') || filename.starts_with('\\') {
+            return Err(AppError::SecurityBlock(format!(
+                "Blocked unsafe filename: {filename}"
+            )));
+        }
+        let target = project_dir.join(filename);
+        if !target.parent().unwrap_or(&target).starts_with(&project_dir) {
+            return Err(AppError::SecurityBlock(format!(
+                "Path traversal blocked: {filename}"
+            )));
+        }
+        std::fs::write(&target, content)?;
+        written.push(filename.clone());
+    }
+    Ok(written)
+}
+
 // -- Team sharing commands --
 
 #[tauri::command]
@@ -293,6 +335,8 @@ pub fn run() {
             cmd_load_supabase_config,
             cmd_team_generate_invite,
             cmd_team_join,
+            cmd_write_env_files,
+            cmd_read_env_contents,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

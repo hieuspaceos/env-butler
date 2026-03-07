@@ -1,3 +1,5 @@
+#![deny(unsafe_code)]
+
 pub mod ci_token;
 pub mod crypto;
 pub mod error;

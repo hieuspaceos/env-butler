@@ -12,15 +12,17 @@
     "dialog:allow-save",
     {
       "identifier": "fs:allow-write-text-file",
-      "allow": [{ "path": "**" }]
+      "allow": [{ "path": "$HOME/.env-butler/**" }]
     },
     {
       "identifier": "fs:allow-read-file",
-      "allow": [{ "path": "**" }]
+      "allow": [{ "path": "$HOME/.env-butler/**" }]
     },
     {
       "identifier": "fs:allow-write-file",
-      "allow": [{ "path": "**" }]
-    }
+      "allow": [{ "path": "$HOME/.env-butler/**" }]
+    },
+    "fs:allow-read-file-with-dialog",
+    "fs:allow-write-file-with-dialog"
   ]
 }
