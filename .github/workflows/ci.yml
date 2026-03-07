@@ -37,3 +37,8 @@ jobs:
 
       - name: Frontend tests
         run: npm test -- --run
+
+      - name: Cargo audit
+        run: |
+          cargo install cargo-audit --quiet
+          cargo audit
