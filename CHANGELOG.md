@@ -1,5 +1,34 @@
 # Changelog
 
+## v0.5.0 — 2026-03-07
+
+### Breaking Changes
+- **Vault format v2** — Envelope encryption requires explicit migration. Existing v1 vaults must be upgraded via GUI ("Migrate to v2") or `env-butler team migrate`. Run SQL migrations `002_team_v2_envelope_encryption.sql` and `003_team_v2_rls_member_scoping.sql` in Supabase first.
+
+### Features
+- **Team v2 — per-user envelope encryption** — A random Vault Key encrypts .env data, wrapped individually per member with their own passphrase. No shared secret across the team.
+- **Member-scoped RLS** — Members use Supabase anon key + Row Level Security policies. Owner retains admin access via service_role key.
+- **Secure v2 invite flow** — Invite tokens contain no secrets (URL + one-time code only). Member registers their own key during join.
+- **Individual revocation** — Revoke a single member without rotating the Vault Key for everyone else.
+- **Explicit v1→v2 migration** — Backup-safe upgrade path via GUI button or CLI command.
+
+### New CLI Commands
+- `env-butler team invite-v2` — generate a v2 invite token
+- `env-butler team join-v2 <file>` — join via v2 invite
+- `env-butler team approve <member-id> --passphrase <temp>` — owner approves member
+- `env-butler team activate` — member activates membership
+- `env-butler team list` — list vault members
+- `env-butler team revoke <member-id>` — revoke a member
+- `env-butler team migrate` — upgrade vault to v2
+
+### New Modules
+- `envelope.rs` — per-member key wrapping (AES-256-GCM)
+- `supabase_team.rs` — team member CRUD against Supabase
+- `vault_migration.rs` — v1→v2 migration logic
+
+### Platforms
+- macOS (Universal), Windows (x64)
+
 ## v0.4.0 — 2026-03-07
 
 ### Breaking Changes

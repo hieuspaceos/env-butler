@@ -9,7 +9,7 @@ Secure `.env` sync tool for developers. Zero-knowledge encryption, cross-machine
 - **BIP39 Recovery Kit** — 24-word mnemonic (same standard as Bitcoin wallets) for Master Key recovery.
 - **Hash-Based Conflict Detection** — Variable-level masked diff view when local and remote diverge.
 - **3 Sync Methods** — Supabase cloud, folder-based (Google Drive/iCloud/Dropbox), or portable `.envbutler` files.
-- **Team Sharing** — Invite tokens let team members access shared vaults. No auth server needed.
+- **Team Sharing v2** — Per-user envelope encryption. Each member has their own passphrase. Vault Key is wrapped individually per member. Individual revocation without re-keying the whole team.
 - **CI/CD Ready** — Service tokens for non-interactive pulls in GitHub Actions, GitLab CI, etc.
 - **CLI + GUI** — Desktop app (Tauri) and terminal CLI share the same Rust core.
 - **Self-Hosted** — Your Supabase instance, your data. No managed service, no vendor lock-in.
@@ -55,9 +55,14 @@ env-butler folder-pull
 env-butler export
 env-butler import project.envbutler
 
-# Team sharing
-env-butler team invite            # Generate .envbutler-team token
-env-butler team join token.envbutler-team  # Join with invite token
+# Team sharing (v2 — envelope encryption)
+env-butler team invite-v2         # Generate v2 invite token
+env-butler team join-v2 token.envbutler-team  # Join with v2 invite
+env-butler team approve <member-id> --passphrase <temp>  # Owner approves member
+env-butler team activate          # Member activates membership
+env-butler team list              # List vault members
+env-butler team revoke <member-id>  # Revoke a member
+env-butler team migrate           # Upgrade vault to v2
 
 # CI/CD
 env-butler ci generate-token      # Base64 token for GitHub Secrets

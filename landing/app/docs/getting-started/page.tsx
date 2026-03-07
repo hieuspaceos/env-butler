@@ -201,30 +201,48 @@ env-butler pull`}
           <span className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-mono flex items-center justify-center">
             6
           </span>
-          Team Sharing
+          Team Sharing (v2)
         </h2>
         <p className="text-zinc-400">
-          Share vault access with team members using encrypted invite tokens.
-          No auth server needed.
+          Team v2 uses per-user envelope encryption — each member has their own
+          passphrase, no shared secret. Run the SQL migrations first:
+          <code className="ml-1 text-xs text-emerald-400">002_team_v2_envelope_encryption.sql</code> and{" "}
+          <code className="text-xs text-emerald-400">003_team_v2_rls_member_scoping.sql</code>.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-3">
           <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/50 space-y-2">
-            <h3 className="font-semibold text-zinc-200">Owner</h3>
+            <h3 className="font-semibold text-zinc-200">1. Owner invites</h3>
             <pre className="text-xs font-mono text-zinc-400">
-{`env-butler team invite
-# Share the .envbutler-team file
-# + passphrase via Slack/AirDrop`}
+{`env-butler team invite-v2
+# Share the invite token file with your teammate`}
             </pre>
           </div>
           <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/50 space-y-2">
-            <h3 className="font-semibold text-zinc-200">Team Member</h3>
+            <h3 className="font-semibold text-zinc-200">2. Member joins</h3>
             <pre className="text-xs font-mono text-zinc-400">
-{`env-butler team join token.envbutler-team
-# Enter passphrase → done
-# Can now push/pull`}
+{`env-butler team join-v2 token.envbutler-team
+# Member registers their own passphrase`}
+            </pre>
+          </div>
+          <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/50 space-y-2">
+            <h3 className="font-semibold text-zinc-200">3. Owner approves</h3>
+            <pre className="text-xs font-mono text-zinc-400">
+{`env-butler team approve <member-id> --passphrase <temp>
+# Wraps Vault Key for the member`}
+            </pre>
+          </div>
+          <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/50 space-y-2">
+            <h3 className="font-semibold text-zinc-200">4. Member activates</h3>
+            <pre className="text-xs font-mono text-zinc-400">
+{`env-butler team activate
+# Unlocks access — can now push/pull`}
             </pre>
           </div>
         </div>
+        <p className="text-sm text-zinc-500">
+          GUI: use the Team section on the dashboard for the same flow.
+          Revoke a member anytime: <code className="text-xs text-emerald-400">env-butler team revoke &lt;member-id&gt;</code>
+        </p>
       </section>
 
       {/* CI/CD */}

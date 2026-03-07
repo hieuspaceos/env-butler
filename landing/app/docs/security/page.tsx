@@ -182,6 +182,48 @@ Get-FileHash Env-Butler_*.exe -Algorithm SHA256`}
         </pre>
       </section>
 
+      {/* Team v2 envelope encryption */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold">Team v2: Envelope Encryption</h2>
+        <p className="text-zinc-400">
+          Team sharing uses per-user envelope encryption — each member has their
+          own passphrase and the Vault Key is wrapped individually per member.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/50">
+            <h3 className="font-semibold text-zinc-200 mb-1">Envelope Keys</h3>
+            <p className="text-sm text-zinc-400">
+              A random 256-bit Vault Key encrypts your .env data. That key is
+              then wrapped (encrypted) separately with each member&apos;s own
+              passphrase — no shared secret exists across the team.
+            </p>
+          </div>
+          <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/50">
+            <h3 className="font-semibold text-zinc-200 mb-1">Member-Scoped RLS</h3>
+            <p className="text-sm text-zinc-400">
+              Members authenticate with Supabase anon key + Row Level Security
+              policies scoped to their member ID. No service_role key is shared
+              with team members.
+            </p>
+          </div>
+          <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/50">
+            <h3 className="font-semibold text-zinc-200 mb-1">Secure Invite Flow</h3>
+            <p className="text-sm text-zinc-400">
+              v2 invite tokens contain no secrets — only a URL and one-time
+              code. Members register their own key during join. Owner approves
+              before access is granted.
+            </p>
+          </div>
+          <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/50">
+            <h3 className="font-semibold text-zinc-200 mb-1">Individual Revocation</h3>
+            <p className="text-sm text-zinc-400">
+              Removing a member invalidates only their wrapped key copy. The
+              Vault Key itself does not change — other members are unaffected.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Threat model */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Threat Model</h2>
@@ -218,6 +260,14 @@ Get-FileHash Env-Butler_*.exe -Algorithm SHA256`}
                 [
                   "Malicious binary",
                   "All builds are public on GitHub Actions with SHA-256 checksums",
+                ],
+                [
+                  "Shared team secret leaks",
+                  "Envelope encryption — no single secret shared across team members",
+                ],
+                [
+                  "Member compromise",
+                  "Revoke individual member without rotating keys for the whole team",
                 ],
               ].map(([threat, mitigation]) => (
                 <tr key={threat} className="border-b border-zinc-800/50">
