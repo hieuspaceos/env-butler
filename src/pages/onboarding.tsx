@@ -1,10 +1,11 @@
-// First-run onboarding wizard: project slug → Master Key → Recovery Kit → Supabase config.
+// First-run onboarding wizard: project slug → Master Key (BIP39 mnemonic) → Recovery Kit → Supabase config.
+// The 24-word mnemonic IS the Master Key — same words always produce the same encryption key.
 
 import { useState, useRef } from "react";
 import { KeyRound, FolderOpen, Database, CheckCircle2 } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import RecoveryKitDisplay from "@/components/recovery-kit-display";
-import { generateRecoveryKit, saveProjectSlug } from "@/lib/tauri-commands";
+import { generateRecoveryKit, saveProjectSlug, saveSupabaseConfig } from "@/lib/tauri-commands";
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -20,8 +21,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const masterKeyRef = useRef<HTMLInputElement>(null);
-  const confirmKeyRef = useRef<HTMLInputElement>(null);
   const supabaseUrlRef = useRef<HTMLInputElement>(null);
   const supabaseKeyRef = useRef<HTMLInputElement>(null);
 
@@ -41,25 +40,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     }
   };
 
-  const handleMasterKeySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const key = masterKeyRef.current?.value;
-    const confirm = confirmKeyRef.current?.value;
-
-    if (!key || !confirm) return;
-    if (key !== confirm) {
-      setError("Master Keys do not match");
-      return;
-    }
-    if (key.length < 8) {
-      setError("Master Key must be at least 8 characters");
-      return;
-    }
-
-    // Clear inputs immediately
-    if (masterKeyRef.current) masterKeyRef.current.value = "";
-    if (confirmKeyRef.current) confirmKeyRef.current.value = "";
-
+  const handleGenerateMnemonic = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -77,11 +58,27 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     setStep("supabase");
   };
 
-  const handleSupabaseSubmit = (e: React.FormEvent) => {
+  const handleSupabaseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Supabase config will be used in Phase 4
-    // For now just proceed
-    setStep("done");
+    const url = supabaseUrlRef.current?.value?.trim();
+    const key = supabaseKeyRef.current?.value?.trim();
+
+    if (url && key) {
+      try {
+        setLoading(true);
+        setError(null);
+        await saveSupabaseConfig(url, key);
+        setStep("done");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err));
+        setLoading(false);
+        return;
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setStep("done");
+    }
   };
 
   const stepIndicators: { key: Step; icon: typeof KeyRound; label: string }[] = [
@@ -134,7 +131,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                   if (selected) {
                     const folderPath = selected as string;
                     setProjectPath(folderPath);
-                    // Auto-populate slug from folder name
                     const folderName = folderPath.split(/[/\\]/).filter(Boolean).pop() || "";
                     const autoSlug = folderName.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
                     if (!slug) setSlug(autoSlug);
@@ -171,48 +167,36 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           </form>
         )}
 
-        {/* Step: Master Key */}
+        {/* Step: Master Key — generate BIP39 mnemonic */}
         {step === "master-key" && (
-          <form onSubmit={handleMasterKeySubmit} className="space-y-4">
+          <div className="space-y-4">
             <div className="text-center mb-6">
-              <h2 className="text-xl font-bold">Set Your Master Key</h2>
+              <h2 className="text-xl font-bold">Generate Your Master Key</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                This password encrypts all your .env files. It is never stored or transmitted.
+                Your Master Key is a 24-word mnemonic phrase. It encrypts all your .env files
+                and can always recover your data.
               </p>
             </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">Master Key</label>
-              <input
-                ref={masterKeyRef}
-                type="password"
-                autoComplete="off"
-                data-1p-ignore
-                placeholder="Enter Master Key (min 8 chars)"
-                className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">Confirm Master Key</label>
-              <input
-                ref={confirmKeyRef}
-                type="password"
-                autoComplete="off"
-                data-1p-ignore
-                placeholder="Re-enter Master Key"
-                className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+            <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-blue-300 space-y-2">
+              <p className="font-semibold text-blue-200">How it works</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>We generate 24 random words (BIP39 standard)</li>
+                <li>These words ARE your encryption key</li>
+                <li>Same words always produce the same key</li>
+                <li>You enter them when pushing or pulling</li>
+              </ul>
             </div>
             <button
-              type="submit"
+              onClick={handleGenerateMnemonic}
               disabled={loading}
               className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 disabled:opacity-50"
             >
-              {loading ? "Generating Recovery Kit..." : "Continue"}
+              {loading ? "Generating..." : "Generate Master Key"}
             </button>
-          </form>
+          </div>
         )}
 
-        {/* Step: Recovery Kit */}
+        {/* Step: Recovery Kit — display and save mnemonic */}
         {step === "recovery" && mnemonic && (
           <RecoveryKitDisplay mnemonic={mnemonic} onConfirm={handleRecoveryConfirm} />
         )}
@@ -236,7 +220,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Anon Key</label>
+              <label className="block text-sm font-medium">Service Role Key</label>
               <input
                 ref={supabaseKeyRef}
                 type="password"
@@ -246,7 +230,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             </div>
             <button
               type="submit"
-              className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90"
+              disabled={loading}
+              className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 disabled:opacity-50"
             >
               Complete Setup
             </button>

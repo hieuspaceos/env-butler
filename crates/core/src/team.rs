@@ -3,6 +3,11 @@
 //! Team invite token: encrypted package containing vault access credentials.
 //! Owner generates token with passphrase → member imports to gain push/pull access.
 //! Format: ENVBTLR_TEAM\0 (12 bytes) | version (1 byte) | AES-256-GCM encrypted JSON
+//!
+//! SECURITY NOTE: The invite token contains the Supabase service_role key and
+//! the vault master key. Any team member who decrypts the token gains full access
+//! to the Supabase instance — not just the shared project. Only invite trusted
+//! team members. For higher isolation, use separate Supabase instances per team.
 
 use chrono::Utc;
 use serde::{Deserialize, Serialize};

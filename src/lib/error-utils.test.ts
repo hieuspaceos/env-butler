@@ -18,8 +18,8 @@ describe("toErrorMessage", () => {
   });
 
   it("handles null and undefined", () => {
-    expect(toErrorMessage(null)).toBe("null");
-    expect(toErrorMessage(undefined)).toBe(undefined); // JSON.stringify(undefined) returns undefined
+    expect(toErrorMessage(null)).toBe("An unknown error occurred");
+    expect(toErrorMessage(undefined)).toBe("An unknown error occurred");
   });
 
   it("handles number errors", () => {

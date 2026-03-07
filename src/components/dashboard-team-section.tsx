@@ -115,6 +115,9 @@ export default function DashboardTeamSection({ activeProject, refresh, setError,
           <p className="text-xs text-muted-foreground">
             Creates an encrypted token file. Share it + the passphrase with your teammate.
           </p>
+          <p className="text-xs text-amber-400/80">
+            Note: The invite includes your Supabase credentials. Only invite people you trust.
+          </p>
           <div className="space-y-3">
             <div>
               <label className="text-sm text-muted-foreground">Your name (optional)</label>
