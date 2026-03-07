@@ -86,3 +86,11 @@ worktrees/
 
 # Rust build artifacts
 target/
+
+# AI agent configs (local only)
+.claude/
+.opencode/
+
+# Build metadata
+release-manifest.json
+.repomixignore

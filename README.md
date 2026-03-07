@@ -16,7 +16,7 @@ Secure `.env` sync tool for developers. Zero-knowledge encryption, cross-machine
 
 ## Documentation
 
-Full docs at [env-butler.vercel.app/docs](https://env-butler.vercel.app/docs/) — setup guide, architecture, security model, and FAQ.
+Full docs at [env-butler.hieuspace.com/docs](http://env-butler.hieuspace.com/docs/) — setup guide, architecture, security model, and FAQ.
 
 ## Quick Start
 
